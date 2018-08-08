@@ -10,6 +10,8 @@ import StatusEvents from "common/events/Status-Events";
 import PoolNewWorkManagement from "./Pool-New-Work-Management"
 import BlockchainGenesis from 'common/blockchain/global/Blockchain-Genesis';
 
+import PoolWorkValidation from "./Pool-Work-Validation";
+
 class PoolWorkManagement{
 
     constructor(poolManagement, blockchain){
@@ -18,8 +20,19 @@ class PoolWorkManagement{
         this.blockchain = blockchain;
 
         this.poolNewWorkManagement = new PoolNewWorkManagement(poolManagement, this, blockchain);
+        this.poolWorkValidation = new PoolWorkValidation(poolManagement, this);
 
         this.poolWork = new PoolWork(poolManagement, blockchain);
+    }
+
+    startPoolWorkManagement(){
+        this.poolWork.startGarbageCollector();
+        this.poolWorkValidation.startPoolWorkValidation();
+    }
+
+    stopPoolWorkManagement(){
+        this.poolWorkValidation.stopPoolWorkValidation();
+        this.poolWork.stopGarbageCollector();
     }
 
 
@@ -47,6 +60,7 @@ class PoolWorkManagement{
             h: this.poolWork.lastBlock.height,
             t: this.poolWork.lastBlock.difficultyTargetPrev,
             s: this.poolWork.lastBlock.computedBlockPrefix,
+            I: this.poolWork.lastBlockId,
 
             start: this.poolWork.lastBlockNonce,
             end: this.poolWork.lastBlockNonce + hashes,
@@ -89,17 +103,6 @@ class PoolWorkManagement{
 
             if ( (prevBlock  || blockInformationMinerInstance.workBlock) === undefined)
                 throw {message: "miner instance - no block"};
-
-            if (work.timeDiff !== undefined) {
-                if (typeof work.timeDiff !== "number") throw {message: "timeDiff is invalid"};
-
-                let hashesFactor = Math.min(10, ( 80000 / work.timeDiff )); //80 sec
-                hashesFactor = Math.max(0.2, hashesFactor);
-
-                let hashesPerSecond = Math.floor( minerInstance.hashesPerSecond * hashesFactor);
-                minerInstance.hashesPerSecond = Math.max( 100, Math.min( hashesPerSecond, 3000000 ));
-
-            }
 
 
             if ( false === await blockInformationMinerInstance.validateWorkHash( work.hash, work.nonce, prevBlock )  )
