@@ -21,15 +21,15 @@ class NodeAPIPrivate{
 
     async walletImport(req, res){
 
+        let address = req.address;
+        let publicKey = req.publicKey;
         let privateKey = req.privateKey;
-
-        let address = InterfaceBlockchainAddressHelper.generateAddress(undefined, privateKey);
 
         let content = {
             version: '0.1',
-            address: address.address,
-            publicKey: address.publicKey,
-            privateKey: address.privateKey,
+            address: address,
+            publicKey: publicKey,
+            privateKey: privateKey,
         };
 
         try {
