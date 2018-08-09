@@ -38,7 +38,7 @@ class NodeAPIPrivate{
 
             if (answer.result === true) {
                 await Blockchain.Wallet.saveWallet();
-                return {result: true, address: address.address};
+                return {result: true, address: address};
             } else
                 return {result: false, message: answer.message};
 
