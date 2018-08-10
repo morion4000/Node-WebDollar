@@ -9,7 +9,7 @@ import BlockchainMiningReward from 'common/blockchain/global/Blockchain-Mining-R
 
 import WebDollarCoins from "common/utils/coins/WebDollar-Coins"
 
-const PAYOUT_INTERVAL = consts.DEBUG ? 5 : 40 + Math.floor( Math.random()*10 ); //in blocks;
+const PAYOUT_INTERVAL = consts.DEBUG ? 5 : 400 + Math.floor( Math.random()*10 ); //in blocks;
 
 
 class PoolPayouts{

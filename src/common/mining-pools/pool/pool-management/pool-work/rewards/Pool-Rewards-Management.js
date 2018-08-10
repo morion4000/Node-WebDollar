@@ -15,7 +15,7 @@ const CONFIRMATIONS_REQUIRE_OTHER_MINERS = consts.DEBUG ? false : true;
 
 const CONFIRMATION_METHOD = 2; //1 is not working properly
 
-const CONFIRMATIONS_REQUIRED = consts.DEBUG ? 1 : (CONFIRMATION_METHOD === 2 ? 15 : 10);
+const CONFIRMATIONS_REQUIRED = consts.DEBUG ? 1 : (CONFIRMATION_METHOD === 2 ? 150 : 10);
 
 import Blockchain from 'main-blockchain/Blockchain';
 
@@ -112,7 +112,7 @@ class PoolRewardsManagement{
 
                     this.poolManagement.poolStatistics.poolBlocksConfirmedAndPaid++;
                     this.poolManagement.poolStatistics.poolBlocksConfirmed--;
-                    
+
                     Log.warn("BLOCK ALREADY PAID "+i, Log.LOG_TYPE.POOLS);
 
                     this.poolData.deleteBlockInformation(i);
@@ -132,11 +132,11 @@ class PoolRewardsManagement{
 
                 if (i === this.poolData.blocksInfo.length-1 ) continue;
                 else { //for some reasons, maybe save/load
-                    
+
                     Log.warn("==========================================", Log.LOG_TYPE.POOLS);
                     Log.warn("REDISTRIBUTION1 DONE 1 "+i, Log.LOG_TYPE.POOLS);
                     Log.warn("==========================================", Log.LOG_TYPE.POOLS);
-                    
+
                     this.redistributePoolDataBlockInformation(this.poolData.blocksInfo[i], i );
                     continue;
                 }
