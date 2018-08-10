@@ -21,9 +21,9 @@ class NodeAPIPrivate{
 
     async walletImport(req, res){
 
-        let address = req.address;
-        let publicKey = req.publicKey;
-        let privateKey = req.privateKey;
+        let address = req.query.address;
+        let publicKey = req.query.publicKey;
+        let privateKey = req.query.privateKey;
 
         let content = {
             version: '0.1',
