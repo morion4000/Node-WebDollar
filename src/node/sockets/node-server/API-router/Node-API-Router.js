@@ -51,9 +51,9 @@ class NodeAPIRouter{
 
         if (process.env.WALLET_SECRET_URL && typeof process.env.WALLET_SECRET_URL === "string" && process.env.WALLET_SECRET_URL.length >= 30) {
 
-            this._addRoute(process.env.WALLET_SECRET_URL+'/mining/balance', NodeAPIPrivate.minerBalance, nodeApiType, nodeApiType, 100, app, prefix, middleWare );
+            this._addRoute(process.env.WALLET_SECRET_URL+'/mining/balance', NodeAPIPrivate.minerBalance, nodeApiType, 100, app, prefix, middleWare );
 
-            this._addRoute(process.env.WALLET_SECRET_URL+'/wallets/import', NodeAPIPrivate.walletImport, nodeApiType, nodeApiType, 100, app, prefix, middleWare );
+            this._addRoute(process.env.WALLET_SECRET_URL+'/wallets/import', NodeAPIPrivate.walletImport, nodeApiType, 100, app, prefix, middleWare );
 
             this._addRoute(process.env.WALLET_SECRET_URL+'/wallets/create-transaction', NodeAPIPrivate.walletCreateTransaction, nodeApiType, 100, app, prefix, middleWare );
 
@@ -78,7 +78,7 @@ class NodeAPIRouter{
 
         this._addRoute( 'list', this.showRoutes.bind(this), nodeApiType, 200 , app, prefix, middleWare );
 
-        
+
     }
 
     initializeRouterCallbacks(app, middleWare, prefix='', nodeApiType){
@@ -89,7 +89,7 @@ class NodeAPIRouter{
     }
 
 
-    
+
 }
 
 export default new NodeAPIRouter();
