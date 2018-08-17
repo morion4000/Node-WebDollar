@@ -1,5 +1,7 @@
 const uuid = require('uuid');
 import FallBackNodesList from 'node/sockets/node-clients/service/discovery/fallbacks/fallback_nodes_list';
+import  Utils from "common/utils/helpers/Utils"
+
 const BigNumber = require('bignumber.js');
 const BigInteger = require('big-integer');
 
@@ -246,7 +248,7 @@ consts.SETTINGS = {
 
     NODE: {
 
-        VERSION: "1.197",
+        VERSION: "1.197.2",
 
         VERSION_COMPATIBILITY: "1.174",
         VERSION_COMPATIBILITY_POOL_MINERS: "1.174",
@@ -266,7 +268,7 @@ consts.SETTINGS = {
         FALLBACK_INTERVAL: 10 * 1000,                     //miliseconds
         STATUS_INTERVAL: 40 * 1000,
         LATENCY_CHECK: 5*1000,
-        MAX_ALLOWED_LATENCY: 10*1000,  //miliseconds
+        MAX_ALLOWED_LATENCY: 6*1000,  //miliseconds
         CONCURRENCY_BLOCK_DOWNLOAD_MINERS_NUMBER: (process.env.BROWSER? 10 : 30),
 
 
@@ -409,8 +411,12 @@ consts.TERMINAL_WORKERS = {
 
     // file gets created on build
     PATH: './dist_bundle/terminal_worker.js',
-    PATH_CPP: './dist_bundle/CPU/argon2-bench2',
-    PATH_GPU: './dist_bundle/GPU/argon2-gpu-test',
+
+    PATH_CPP: Utils.isWin ? '' : './dist_bundle/CPU/', //Unix are in folders, Win32 is in root
+    PATH_CPP_FILENAME: 'argon2-bench2' + (Utils.isWin ? '.exe' : ''),
+
+    PATH_GPU: Utils.isWin ? '' : './dist_bundle/GPU/', //Unix are in folders, Win32 is in root
+    PATH_GPU_FILENAME: 'argon2-gpu-test' + (Utils.isWin ? '.exe' : ''),
 
     GPU_MODE: "opencl", //opencl
     GPU_MAX: 1,
