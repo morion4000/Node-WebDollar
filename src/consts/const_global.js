@@ -232,7 +232,7 @@ consts.MINING_POOL = {
 
     CONNECTIONS:{
 
-        NO_OF_IDENTICAL_IPS: 200,
+        NO_OF_IDENTICAL_IPS: 100,
 
     },
 
