@@ -16,8 +16,6 @@ class NodeAPIRouter{
         this._routes = [];
         this._routesEnabled = false;
 
-        NodeAPIPublicPools.init();
-
     }
 
     _addRoute (route, callback, nodeApiType, maxWeight, app, prefix, middleWare ) {
@@ -74,6 +72,7 @@ class NodeAPIRouter{
         this._addRoute( 'server/nodes/blocks-propagated', NodeAPIPublicNodes.lastBlocksMined.bind(NodeAPIPublicNodes), nodeApiType, 20, app, prefix, middleWare );
 
         this._addRoute( 'pools/stats', NodeAPIPublicPools.stats, nodeApiType, 200 , app, prefix, middleWare ) ;
+        this._addRoute( 'pools/miners', NodeAPIPublicPools.miners, nodeApiType, 200 , app, prefix, middleWare ) ;
 
         // respond with "hello"
         this._addRoute( 'hello', NodeAPIPublic.helloWorld, nodeApiType, 1000, app, prefix, middleWare );
