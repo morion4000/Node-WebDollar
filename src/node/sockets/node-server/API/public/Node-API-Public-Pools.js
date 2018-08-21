@@ -24,19 +24,28 @@ class NodeAPIPublicPools {
   }
 
   miners(req, res) {
-
     let miners = [];
+    /*
+        for (let i = 0; i < NodesList.nodes.length; i++) {
+          var socket = NodesList.nodes[i];
 
-    for (let i = 0; i < NodesList.nodes.length; i++) {
-      var socket = NodesList.nodes[i];
+          if (socket.node.protocol.nodeConsensusType != NODE_CONSENSUS_TYPE.NODE_CONSENSUS_MINER_POOL) continue;
 
-      if (socket.node.protocol.nodeConsensusType != NODE_CONSENSUS_TYPE.NODE_CONSENSUS_MINER_POOL) continue;
+          miners.push(socket.node);
+        }
+    */
 
-      miners.push(socket.node);
+    if (Blockchain.MinerPoolManagement !== undefined && Blockchain.MinerPoolManagement.minerPoolStarted) {
+      let minersOnline = Blockchain.MinerPoolManagement.poolData.connectedMinerInstances;
+
+      for (let i = 0; i < minersOnline.length; i++) {
+        var miner = minersOnline[i];
+
+        miners.push(miner);
+      }
     }
 
     return miners;
-
   }
 
 }
