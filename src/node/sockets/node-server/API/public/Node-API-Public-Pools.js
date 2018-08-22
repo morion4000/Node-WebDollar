@@ -27,29 +27,22 @@ class NodeAPIPublicPools {
 
   miners(req, res) {
     let miners = [];
-    /*
-        for (let i = 0; i < NodesList.nodes.length; i++) {
-          var socket = NodesList.nodes[i];
-
-          if (socket.node.protocol.nodeConsensusType != NODE_CONSENSUS_TYPE.NODE_CONSENSUS_MINER_POOL) continue;
-
-          miners.push(socket.node);
-        }
-    */
-
+    
     if (Blockchain.PoolManagement !== undefined && Blockchain.PoolManagement.poolStarted) {
       let minersOnline = Blockchain.PoolManagement.poolData.connectedMinerInstances.list;
 
       for (let i = 0; i < minersOnline.length; i++) {
         var miner = minersOnline[i];
 
+        var address =  BufferExtended.toBase(InterfaceBlockchainAddressHelper.generateAddressWIF(miner.address));
+
         miners.push({
           hashes: miner.hashesPerSecond,
-          address: miner.address.toString('hex'),
+          address: address,
           reward_total: miner.miner._rewardTotal,
           reward_confirmed: miner.miner._rewardConfirmed,
           reward_sent: miner.miner._rewardSent,
-          date_activity: miner.miner.rewardSent,
+          date_activity: miner.miner.dateActivity,
         });
       }
     }
