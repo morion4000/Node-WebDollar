@@ -13,12 +13,25 @@ class NodeAPIPublicPools {
 
     let stats = {
       hashes: 0,
-      hashes_now: 0
+      hashes_now: 0,
+      miners_online: 0,
+      blocks_confirmed_and_paid: 0,
+      blocks_unconfirmed: 0,
+      blocks_confirmed: 0,
+      blocks_being_confirmed: 0,
+      time_remaining: 0,
     };
 
     if (Blockchain.PoolManagement !== undefined && Blockchain.PoolManagement.poolStarted) {
-      stats.hashes = Blockchain.PoolManagement.poolStatistics.poolHashes;
-      stats.hashes_now = Blockchain.PoolManagement.poolStatistics.poolHashesNow;
+      var statistics = Blockchain.PoolManagement.poolStatistics;
+      stats.hashes = statistics.poolHashes;
+      stats.hashes_now = statistics.poolHashesNow;
+      stats.miners_online = statistics.poolMinersOnline.length;
+      stats.blocks_confirmed_and_paid = statistics.poolBlocksConfirmedAndPaid;
+      stats.blocks_unconfirmed = statistics.poolBlocksUnconfirmed;
+      stats.blocks_confirmed = statistics.poolBlocksConfirmed;
+      stats.blocks_being_confirmed = statistics.poolBlocksBeingConfirmed;
+      stats.time_remaining = statistics.poolTimeRemaining;
     }
 
     return stats;
