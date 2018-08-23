@@ -27,7 +27,7 @@ class NodeAPIPublicPools {
 
   miners(req, res) {
     let miners = [];
-    
+
     if (Blockchain.PoolManagement !== undefined && Blockchain.PoolManagement.poolStarted) {
       let minersOnline = Blockchain.PoolManagement.poolData.connectedMinerInstances.list;
 
@@ -38,11 +38,12 @@ class NodeAPIPublicPools {
 
         miners.push({
           hashes: miner.hashesPerSecond,
+          hashes_alt: miner.realHashesPerSecond,
           address: address,
           reward_total: miner.miner._rewardTotal,
           reward_confirmed: miner.miner._rewardConfirmed,
           reward_sent: miner.miner._rewardSent,
-          date_activity: miner.miner.dateActivity,
+          date_activity: miner.dateActivity,
         });
       }
     }
