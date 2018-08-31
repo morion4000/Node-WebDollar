@@ -34,6 +34,8 @@ class PoolWorkValidation{
 
         }
 
+        minerInstance.dateActivity = new Date().getTime()/1000;
+
         work = {
             work: work,
             minerInstance: minerInstance
