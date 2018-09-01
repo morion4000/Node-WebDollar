@@ -46,10 +46,13 @@ class InterfaceBlockchainBlock {
             try {
 
                 if ( this.height === this.blockchain.blocks.length )  //last block
-                    this._validateMedianTimestamp(timeStamp);
+                    this._validateMedianTimestamp( timeStamp );
 
             } catch (exception){
                 timeStamp = exception.medianTimestamp + 1;
+
+                this._validateMedianTimestamp( timeStamp );
+
                 //timeStamp = exception.medianTimestamp + consts.BLOCKCHAIN.DIFFICULTY.TIME_PER_BLOCK + 1;
             }
 
@@ -212,7 +215,7 @@ class InterfaceBlockchainBlock {
 
         if ( timestamp < medianTimestamp )
             throw {message: "Block Timestamp is not bigger than the previous 10 blocks", medianTimestamp: medianTimestamp };
-            //throw {message: "Block Timestamp is not bigger than the previous 10 blocks", medianTimestamp: medianTimestamp };
+            //throw {message: "Block Timestamp is not bigger than the previous 10 blocks", medianTimestamp: this.blockValidation.getTimeStampCallback(this.height) };
 
     }
 
