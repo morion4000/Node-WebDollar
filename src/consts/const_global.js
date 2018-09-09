@@ -226,7 +226,8 @@ consts.MINING_POOL = {
 
     MINING:{
         MINING_POOL_MINIMUM_PAYOUT: 200000,
-        FEE_PER_BYTE: 600, // in WEBD
+        FEE_PER_BYTE: 580, // in WEBD
+
         MAXIMUM_BLOCKS_TO_MINE_BEFORE_ERROR: 13
     },
 
@@ -250,7 +251,7 @@ consts.SETTINGS = {
 
     NODE: {
 
-        VERSION: "1.197.4",
+        VERSION: "1.197.5",
 
         VERSION_COMPATIBILITY: "1.174",
         VERSION_COMPATIBILITY_POOL_MINERS: "1.174",
@@ -385,6 +386,8 @@ consts.SETTINGS = {
         },
 
         MAXIMUM_TRANSACTIONS_TO_DOWNLOAD: 100,
+
+        MINIMUM_TRANSACTION_AMOUNT: 100000, //10 WEBD
 
     }
 };
