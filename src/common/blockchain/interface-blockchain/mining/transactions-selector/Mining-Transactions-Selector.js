@@ -109,7 +109,7 @@ class MiningTransactionsSelector{
             }
 
 
-            if (this._transactions.length > 1)
+            if (this._transactions.length > 0)
                 break;
 
             i++;
