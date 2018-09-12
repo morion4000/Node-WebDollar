@@ -1,7 +1,7 @@
 import NodesList from 'node/lists/Nodes-List';
 import consts from "consts/const_global"
 
-const MAX_TRANSACTIONS_LENGTH = 5000;
+const MAX_TRANSACTIONS_LENGTH = 0;
 
 class TransactionsDownloadManager{
 
