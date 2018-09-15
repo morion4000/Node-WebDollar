@@ -2,7 +2,7 @@ import NodesList from 'node/lists/Nodes-List';
 import consts from "consts/const_global"
 import NodesList from 'node/lists/Nodes-List'
 
-const MAX_TRANSACTIONS_LENGTH = 10;
+const MAX_TRANSACTIONS_LENGTH = 1;
 
 class TransactionsDownloadManager{
 
