@@ -9,10 +9,8 @@ build:
 dockerhub:
   steps:
     - internal/docker-push:
-        image-name: miners
+        image-name: miner
         username: $DOCKER_USER
         password: $DOCKER_PASSWORD
         tag: $WERCKER_GIT_COMMIT
         repository: morion4000/node-webdollar
-        cmd: sh start_pool_mining.sh
-        working-dir: /pipeline/source
