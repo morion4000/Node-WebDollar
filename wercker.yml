@@ -2,7 +2,8 @@ box: ubuntu:16.04
 
 build:
   steps:
-    - install-packages: linuxbrew-wrapper clang wget software-properties-common cmake libtool autoconf psmisc opencl-headers ocl-icd-libopencl1 pciutils
+    - install-packages:
+        packages: linuxbrew-wrapper clang wget software-properties-common cmake libtool autoconf psmisc opencl-headers ocl-icd-libopencl1 pciutils
     - script:
         name: install node
         code: |
