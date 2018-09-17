@@ -5,9 +5,6 @@ build:
     - internal/docker-build:
         dockerfile: Dockerfile_cpp
         image-name: miner
-
-dockerhub:
-  steps:
     - internal/docker-push:
         image-name: miner
         username: $DOCKER_USER
