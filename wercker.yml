@@ -1,0 +1,13 @@
+box: ubuntu:16.04
+
+build:
+  steps:
+    - internal/docker-build:
+        dockerfile: Dockerfile_cpp
+        image-name: miner
+    - internal/docker-push:
+        image-name: miner
+        username: $DOCKER_USER
+        password: $DOCKER_PASSWORD
+        tag: $WERCKER_GIT_COMMIT
+        repository: morion4000/node-webdollar

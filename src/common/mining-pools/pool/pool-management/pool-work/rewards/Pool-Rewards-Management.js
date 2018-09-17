@@ -115,7 +115,7 @@ class PoolRewardsManagement{
 
                     this.poolManagement.poolStatistics.poolBlocksConfirmedAndPaid++;
                     this.poolManagement.poolStatistics.poolBlocksConfirmed--;
-                    
+
                     Log.warn("BLOCK ALREADY PAID "+i, Log.LOG_TYPE.POOLS);
 
                     this.poolData.deleteBlockInformation(i);
@@ -135,11 +135,11 @@ class PoolRewardsManagement{
 
                 if (i === this.poolData.blocksInfo.length-1 ) continue;
                 else { //for some reasons, maybe save/load
-                    
+
                     Log.warn("==========================================", Log.LOG_TYPE.POOLS);
                     Log.warn("REDISTRIBUTION1 DONE 1 "+i, Log.LOG_TYPE.POOLS);
                     Log.warn("==========================================", Log.LOG_TYPE.POOLS);
-                    
+
                     this.redistributePoolDataBlockInformation(this.poolData.blocksInfo[i], i );
                     continue;
                 }

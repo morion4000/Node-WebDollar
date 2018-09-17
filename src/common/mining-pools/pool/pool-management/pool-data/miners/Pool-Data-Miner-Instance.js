@@ -10,6 +10,7 @@ class PoolDataMinerInstance {
         this.miner = miner;
 
         this._hashesPerSecond = 500;
+        this._realHashesPerSecond = 0;
         this.socket = socket;
 
         this.work = undefined;
@@ -38,6 +39,14 @@ class PoolDataMinerInstance {
 
     get hashesPerSecond(){
         return this._hashesPerSecond;
+    }
+
+    set realHashesPerSecond(newValue){
+        this._realHashesPerSecond = newValue;
+    }
+
+    get realHashesPerSecond(){
+        return this._realHashesPerSecond;
     }
 
     set dateActivity(newValue){

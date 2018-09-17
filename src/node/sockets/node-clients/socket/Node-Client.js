@@ -84,6 +84,7 @@ class NodeClient {
                         timeout: timeoutTotal,
 
                         secure: SSL, //https
+                        rejectUnauthorized: false,
 
                         query:{
                             msg: "HelloNode",
