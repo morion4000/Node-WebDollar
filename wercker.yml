@@ -43,6 +43,8 @@ deploy_branch:
         password: $DOCKER_PASSWORD
         tag: $WERCKER_GIT_BRANCH
         repository: morion4000/node-webdollar
+        working-dir: /pipeline/source
+        cmd: npm run commands
 
 deploy_commit:
   steps:
@@ -59,3 +61,5 @@ deploy_commit:
         password: $DOCKER_PASSWORD
         tag: $WERCKER_GIT_COMMIT
         repository: morion4000/node-webdollar
+        working-dir: /pipeline/source
+        cmd: npm run commands
