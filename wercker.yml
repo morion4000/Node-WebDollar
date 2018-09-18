@@ -30,6 +30,8 @@ build:
 
 deploy_branch:
   steps:
+    - install-packages:
+        packages: curl
     - script:
         name: install node
         code: |
@@ -44,6 +46,8 @@ deploy_branch:
 
 deploy_commit:
   steps:
+    - install-packages:
+        packages: curl
     - script:
         name: install node
         code: |
