@@ -30,6 +30,12 @@ build:
 
 deploy_branch:
   steps:
+    - script:
+        name: install node
+        code: |
+          curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
+          bash nodesource_setup.sh
+          apt-get install -y nodejs
     - internal/docker-push:
         username: $DOCKER_USER
         password: $DOCKER_PASSWORD
@@ -38,6 +44,12 @@ deploy_branch:
 
 deploy_commit:
   steps:
+    - script:
+        name: install node
+        code: |
+          curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
+          bash nodesource_setup.sh
+          apt-get install -y nodejs
     - internal/docker-push:
         username: $DOCKER_USER
         password: $DOCKER_PASSWORD
