@@ -115,7 +115,7 @@ deploy_commit_blockchain:
 deploy_commit_binary:
   steps:
     - install-packages:
-        packages: curl zip scp
+        packages: curl zip openssh-client
     - script:
         name: install node
         code: |
