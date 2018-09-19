@@ -145,4 +145,6 @@ deploy_commit_binary:
           zip -r "$DIR.zip" $DIR
     - script:
         name: upload archives
-        code: scp "webdollar-mac-$WERCKER_GIT_COMMIT.zip" $SCP_SERVER
+        code: |
+          echo $SCP_PRIVATE > id_rsa
+          scp -i id_rsa "webdollar-mac-$WERCKER_GIT_COMMIT.zip" $SCP_SERVER
