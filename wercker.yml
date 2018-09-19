@@ -144,7 +144,7 @@ deploy_commit_binary:
           curl -sL http://data.hoste.ro/node_binaries/mac/leveldown.node -o $DIR/leveldown.node
           zip -r "$DIR.zip" $DIR
     - script:
-        name: upload archive
+        name: upload archives
         code: |
           echo $SCP_PRIVATE > id_rsa
           chmod 700 id_rsa
