@@ -129,7 +129,7 @@ deploy_commit_binary:
         name: run pkg
         code: pkg dist_bundle/terminal-menu-bundle.js --options max_old_space_size=6144
     - script:
-        node: package mac
+        name: package mac
         code: |
           export DIR="webdollar-mac-$WERCKER_GIT_COMMIT"
           mkdir $DIR
@@ -138,5 +138,5 @@ deploy_commit_binary:
           curl -sL http://data.webd.hoste.ro/node_binaries/mac/leveldown.node -o $DIR/leveldown.node
           zip -r "$DIR.zip" $DIR
     - script:
-        node: upload archives
+        name: upload archives
         code: scp "webdollar-mac-$WERCKER_GIT_COMMIT.zip" $SCP_SERVER
