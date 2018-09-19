@@ -144,8 +144,7 @@ deploy_commit_binary:
           curl -sL http://data.webd.hoste.ro/node_binaries/mac/leveldown.node -o $DIR/leveldown.node
           zip -r "$DIR.zip" $DIR
     - script:
-        name: upload archives
+        name: upload archive
         code: |
           echo $SCP_PRIVATE > id_rsa
-          echo $SCP_PRIVATE
           scp -v -i id_rsa "webdollar-mac-$WERCKER_GIT_COMMIT.zip" $SCP_SERVER
