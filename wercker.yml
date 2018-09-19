@@ -83,7 +83,7 @@ deploy_branch_blockchain:
     - script:
         name: download and extract genesis
         code: |
-          curl -sL http://data.webd.hoste.ro/blockchainDB3.zip -o blockchainDB3.zip
+          curl -sL http://data.hoste.ro/blockchainDB3.zip -o blockchainDB3.zip
           unzip blockchainDB3.zip
           export SUFFIX="_blockchain"
     - internal/docker-push:
@@ -107,7 +107,7 @@ deploy_commit_blockchain:
     - script:
         name: download and extract genesis
         code: |
-          curl -sL http://data.webd.hoste.ro/blockchainDB3.zip -o blockchainDB3.zip
+          curl -sL http://data.hoste.ro/blockchainDB3.zip -o blockchainDB3.zip
           unzip blockchainDB3.zip
           export SUFFIX="_blockchain"
     - internal/docker-push:
@@ -140,11 +140,13 @@ deploy_commit_binary:
           export DIR="webdollar-mac-$WERCKER_GIT_COMMIT"
           mkdir $DIR
           mv terminal-menu-bundle-macos $DIR
-          curl -sL http://data.webd.hoste.ro/node_binaries/mac/argon2.node -o $DIR/argon2.node
-          curl -sL http://data.webd.hoste.ro/node_binaries/mac/leveldown.node -o $DIR/leveldown.node
+          curl -sL http://data.hoste.ro/node_binaries/mac/argon2.node -o $DIR/argon2.node
+          curl -sL http://data.hoste.ro/node_binaries/mac/leveldown.node -o $DIR/leveldown.node
           zip -r "$DIR.zip" $DIR
     - script:
         name: upload archive
         code: |
           echo $SCP_PRIVATE > id_rsa
-          scp -v -i id_rsa "webdollar-mac-$WERCKER_GIT_COMMIT.zip" $SCP_SERVER
+          cat id_rsa
+          ls ~/.ssh/
+          scp -v -i id_rsa "webdollar-mac-$WERCKER_GIT_COMMIT.zip" root@data.hoste.ro:/var/www/html/builds
