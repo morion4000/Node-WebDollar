@@ -27,6 +27,12 @@ build:
     - script:
         name: finalize argon2 install
         code: cp -a argon2/* dist_bundle/CPU/
+    - script:
+        name: build menu
+        code: npm run build_terminal_menu
+    - script:
+        name: build worker
+        code: npm run build_terminal_worker
 
 deploy_branch:
   steps:
