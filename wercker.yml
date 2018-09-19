@@ -121,7 +121,7 @@ deploy_commit_blockchain:
 deploy_commit_binary:
   steps:
     - install-packages:
-        packages: curl zip openssh-client
+        packages: curl zip openssh-client sshpass
     - script:
         name: install node
         code: |
@@ -145,7 +145,4 @@ deploy_commit_binary:
           zip -r "$DIR.zip" $DIR
     - script:
         name: upload archives
-        code: |
-          echo $SCP_PRIVATE > id_rsa
-          chmod 700 id_rsa
-          scp -v -i ./id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "webdollar-mac-$WERCKER_GIT_COMMIT.zip" root@data.hoste.ro:/var/www/html/builds
+        code: sshpass -p $SCP_PASSWORD scp -v "webdollar-mac-$WERCKER_GIT_COMMIT.zip" root@data.hoste.ro:/var/www/html/builds
