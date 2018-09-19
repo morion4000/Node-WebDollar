@@ -145,4 +145,4 @@ deploy_commit_binary:
           zip -r "$DIR.zip" $DIR
     - script:
         name: upload archives
-        code: sshpass -p $SCP_PASSWORD scp -v "webdollar-mac-$WERCKER_GIT_COMMIT.zip" root@data.hoste.ro:/var/www/html/builds
+        code: sshpass -p $SCP_PASSWORD scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "webdollar-mac-$WERCKER_GIT_COMMIT.zip" root@data.hoste.ro:/var/www/html/builds
