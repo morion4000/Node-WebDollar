@@ -146,5 +146,5 @@ deploy_commit_binary:
     - script:
         name: upload archive
         code: |
-          echo $SCP_PRIVATE > id_rsa
-          scp -v -i ./id_rsa "webdollar-mac-$WERCKER_GIT_COMMIT.zip" root@data.hoste.ro:/var/www/html/builds
+          echo $SCP_PRIVATE > id_rsaa
+          scp -v "webdollar-mac-$WERCKER_GIT_COMMIT.zip" root@data.hoste.ro:/var/www/html/builds
