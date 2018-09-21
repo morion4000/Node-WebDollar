@@ -251,7 +251,7 @@ consts.SETTINGS = {
 
     NODE: {
 
-        VERSION: "1.198.0",
+        VERSION: "1.198.3",
 
         VERSION_COMPATIBILITY: "1.174",
         VERSION_COMPATIBILITY_POOL_MINERS: "1.174",
@@ -412,7 +412,7 @@ consts.TERMINAL_WORKERS = {
      * cpu-cpp
      * gpu
      */
-    TYPE: process.env.TERMINAL_WORKERS_TYPE || "cpu", //cpu-cpp
+    TYPE: process.env.TERMINAL_WORKERS_TYPE || "cpu-cpp", //cpu-cpp, or gpu
 
     // file gets created on build
     PATH: './dist_bundle/terminal_worker.js',
@@ -461,8 +461,10 @@ if ( consts.DEBUG === true ){
         "addr": ["http://127.0.0.1:8085"],
     }];
 
-
 }
+
+if (process.env.NETWORK !== undefined && process.env.NETWORK !== '' && process.env.NETWORK === 'testnet')
+    FallBackNodesList.nodes = FallBackNodesList.nodes_testnet;
 
 
 export default consts
