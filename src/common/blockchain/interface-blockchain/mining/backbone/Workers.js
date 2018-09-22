@@ -101,7 +101,7 @@ class Workers {
     async _makeUnresponsiveThreads(){
 
         try {
-            
+
             let date = new Date().getTime();
 
             if (consts.TERMINAL_WORKERS.TYPE === "cpu-cpp" || consts.TERMINAL_WORKERS.TYPE === "gpu")
@@ -110,9 +110,12 @@ class Workers {
 
                         await this.workers_list[i].restartWorker();
                         this.workers_list[i].date = new Date().getTime();
+
+                        // await this.workers_list[i].kill();
+                        // this.workers_list.splice(i, 1);
+
                         Log.info("Restarting Worker", Log.LOG_TYPE.default);
 
-                        this.workers_list.splice(i, 1);
 
                     }
 
@@ -281,7 +284,7 @@ class Workers {
             }
 
             if (msg.type === 's' || msg.type === 'b'){
-                                //worker is batching now
+                //worker is batching now
                 worker._is_batching = false;
 
                 // keep track of the ones that are working
@@ -292,11 +295,11 @@ class Workers {
 
 
             }
-            
+
             // solved: stop and resolve but with a solution
             if (msg.type === 's') {
 
-                this._finished = true;        
+                this._finished = true;
 
                 //the blockId is not matching
                 if (msg.blockId && parseInt(msg.blockId) !== (this.ibb.blockId || this.ibb.block.height))
@@ -307,7 +310,7 @@ class Workers {
                 if (msg.hash.length === 64) hash = Buffer.from(msg.hash, "hex");
                 else hash = new Buffer(msg.hash);
 
-                let nonce = parseInt(msg.nonce);                
+                let nonce = parseInt(msg.nonce);
 
                 if ( consts.DEBUG && !Blockchain.MinerPoolManagement.minerPoolStarted)
                     if (false === await this._validateHash( hash, nonce ))
@@ -345,11 +348,11 @@ class Workers {
                     this.ibb.bestHash = bestHash;
                     this.ibb.bestHashNonce = parseInt(msg.bestNonce)
                 }
-                
+
 
                 // if none of the threads are working and we finished the range, then we should stop and resolve
                 if (!this._working && this._current >= this._current_max)
-                    this._stopAndResolve();        
+                    this._stopAndResolve();
 
                 if (consts.DEBUG)
                     await this._validateHash(bestHash, parseInt(msg.bestNonce));
@@ -406,65 +409,79 @@ class Workers {
         return this;
     }
 
-    async _loop(_delay) {
+    async _loop(_delay = 1) {
 
-        if (!this.ibb.started || this.ibb.resetForced || (this.ibb.reset && this.ibb.useResetConsensus)) {
+        try {
 
-            if (!this._finished)
-                this._stopAndResolve();
+            if (!this.ibb.started || this.ibb.resetForced || (this.ibb.reset && this.ibb.useResetConsensus)) {
 
-            return false;
-        }
+                if (!this._finished)
+                    this._stopAndResolve();
 
-        await this.workers_list.forEach( async (worker, index) => {
-
-            if (this._finished)
                 return false;
-
-            if (worker._is_batching)
-                return false;
-
-            if (this._final_batch)
-                return false;
-
-
-
-            // add only the rest
-            if (this._current_max - this._current < this.worker_batch)
-                this._final_batch = this._current_max - this._current;
-
-            // keep track of the ones that are working
-            this._working++;
-
-            let batch  = this._final_batch ? this._final_batch : this.worker_batch;
-
-            worker.date = new Date().getTime();
-
-            this._current += this.worker_batch;
-            worker._is_batching = true;
-
-            if (consts.TERMINAL_WORKERS.TYPE === "cpu") {
-                worker.send({
-                    command: 'start',
-                    data: {
-                        block: this.block,
-                        difficulty: this.difficulty,
-                        start: this._current,
-                        batch: batch,
-                        blockId: this.blockId,
-                    }
-                });
-            } else if (consts.TERMINAL_WORKERS.TYPE === "cpu-cpp" || consts.TERMINAL_WORKERS.TYPE === "gpu") {
-
-                if ( false === await worker.send ( this.block.length, this.block, this.difficulty, this._current, this._current + batch, this.worker_batch_thread ))
-                return false;
-
             }
 
-        });
+
+            await this.workers_list.forEach( async (worker, index) => {
+
+                if (this._finished)
+                    return false;
+
+                if (worker._is_batching)
+                    return false;
+
+                if (this._final_batch)
+                    return false;
+
+
+
+                // add only the rest
+                if (this._current_max - this._current < this.worker_batch)
+                    this._final_batch = this._current_max - this._current;
+
+                // keep track of the ones that are working
+                this._working++;
+
+                let batch  = this._final_batch ? this._final_batch : this.worker_batch;
+
+                worker.date = new Date().getTime();
+
+                this._current += this.worker_batch;
+                worker._is_batching = true;
+
+                if (consts.TERMINAL_WORKERS.TYPE === "cpu") {
+
+                    worker.send({
+
+                        command: 'start',
+                        data: {
+                            block: this.block,
+                            difficulty: this.difficulty,
+                            start: this._current,
+                            batch: batch,
+                            blockId: this.blockId,
+                        }
+
+                    });
+
+                } else if (consts.TERMINAL_WORKERS.TYPE === "cpu-cpp" || consts.TERMINAL_WORKERS.TYPE === "gpu") {
+
+                    if ( false === await worker.send ( this.block.length, this.block, this.difficulty, this._current, this._current + batch, this.worker_batch_thread ))
+                        return false;
+
+                }
+
+            });
+
+
+        } catch (exception){
+
+            Log.error("_loop raised an error", Log.LOG_TYPE.BLOCKCHAIN_FORKS )
+
+        }
 
         // healthy loop delay
-        this._loopTimeout = setTimeout( this._loop.bind(this, _delay), _delay);
+        this._loopTimeout = setTimeout( this._loop.bind( this, _delay ), _delay );
 
     }
 }
