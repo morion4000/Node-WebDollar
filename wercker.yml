@@ -114,6 +114,8 @@ deploy_commit_genesis:
 
 deploy_github_pages:
   steps:
+    - install-packages:
+        packages: curl
     - script:
         name: install node
         code: |
