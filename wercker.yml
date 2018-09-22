@@ -121,7 +121,7 @@ deploy_commit_genesis:
 deploy_github_pages:
   steps:
     - install-packages:
-        packages: curl git
+        packages: curl openssh-client sshpass
     - script:
         name: install node
         code: |
@@ -143,10 +143,8 @@ deploy_github_pages:
         name: build documentation
         code: ./node_modules/.bin/esdoc
     - script:
-        name: push branch
-        code: |
-          remoteURL="https://$GH_TOKEN@github.com/morion4000/Node-WebDollar.git"
-          git push -q -f $remoteURL master gh-pages
+        name: upload documentation
+        code: sshpass -p $SCP_PASSWORD scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r out root@data.hoste.ro:/var/www/html/docs
 
 deploy_commit_binary:
   steps:
