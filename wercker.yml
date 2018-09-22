@@ -111,3 +111,30 @@ deploy_commit_genesis:
         repository: webdollarcoin/node-webdollar
         working-dir: /pipeline/source
         cmd: npm run commands
+
+deploy_github_pages:
+  steps:
+    - script:
+        name: install node
+        code: |
+          curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
+          bash nodesource_setup.sh
+          apt-get install -y nodejs
+    - script:
+        name: install esdoc
+        code: npm install esdoc esdoc-standard-plugin
+    - script:
+        name: create configuration
+        code: |
+          echo '{
+            "source": "./src",
+            "destination": "./out",
+            "plugins": [{"name": "esdoc-standard-plugin"}]
+          }' > .esdoc.json
+    - script:
+        name: build documentation
+        code: ./node_modules/.bin/esdoc
+    - git-push:
+         gh_oauth: $GH_TOKEN
+         gh_pages: true
+         basedir: out
