@@ -90,7 +90,7 @@ deploy_branch_genesis:
         username: $DOCKER_USER
         password: $DOCKER_PASSWORD
         tag: "$WERCKER_GIT_BRANCH$SUFFIX"
-        repository: webdollarcoin/node-webdollar
+        repository: morion4000/node-webdollar
         working-dir: /pipeline/source
         cmd: npm run commands
 
@@ -114,7 +114,7 @@ deploy_commit_genesis:
         username: $DOCKER_USER
         password: $DOCKER_PASSWORD
         tag: "$WERCKER_GIT_COMMIT$SUFFIX"
-        repository: webdollarcoin/node-webdollar
+        repository: morion4000/node-webdollar
         working-dir: /pipeline/source
         cmd: npm run commands
 
