@@ -2,10 +2,11 @@ import NodesWaitlist from 'node/lists/waitlist/Nodes-Waitlist'
 
 const https = require('https');
 const http = require('http');
-const path = require('path')
-const express = require('express')
+const path = require('path');
+const express = require('express');
 const cors = require('cors');
-const fs = require('fs')
+const fs = require('fs');
+const bodyParser = require('body-parser');
 
 import consts from 'consts/const_global'
 
@@ -50,6 +51,7 @@ class NodeExpress{
 
             this.app = express();
             this.app.use(cors({ credentials: true }));
+            this.app.use(bodyParser);
 
             try {
                 this.app.use('/.well-known/acme-challenge', express.static('certificates/well-known/acme-challenge'))
@@ -92,7 +94,7 @@ class NodeExpress{
                         break;
                     }
 
-                if (privateKey === '' && cert === '' && caBundle === '') throw {message: "HTTPS server couldn't be started. Starting HTTP"};            
+                if (privateKey === '' && cert === '' && caBundle === '') throw {message: "HTTPS server couldn't be started. Starting HTTP"};
                 if (privateKey === '') throw {message: "HTTPS server couldn't be started because certificate private.key was not found"};
                 if (cert === '') throw {message: "HTTPS server couldn't be started because certificate certificate.crt was not found"};
                 if (caBundle === '') throw {message: "HTTPS server couldn't be started because certificate ca_bundle.crt was not found"};
@@ -199,7 +201,9 @@ class NodeExpress{
             for (let k in req.params)
                 req.params[k] = decodeURIComponent(req.params[k]);
 
-            let answer = await callback(req.params, res);
+            let merged = req.body ? Object.assign(req.params, req.body) : req.params;
+
+            let answer = await callback(merged, res);
             res.json(answer);
 
         } catch (exception){
