@@ -118,7 +118,7 @@ deploy_commit_genesis:
         working-dir: /pipeline/source
         cmd: npm run commands
 
-deploy_github_pages:
+deploy_documentation:
   steps:
     - install-packages:
         packages: curl openssh-client sshpass
@@ -146,7 +146,7 @@ deploy_github_pages:
         name: upload documentation
         code: sshpass -p $SCP_PASSWORD scp -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -r out root@data.hoste.ro:/var/www/html/docs
 
-deploy_documentation:
+deploy_commit_binary:
   steps:
     - install-packages:
         packages: curl zip openssh-client sshpass
