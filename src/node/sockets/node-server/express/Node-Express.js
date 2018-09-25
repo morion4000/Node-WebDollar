@@ -51,7 +51,7 @@ class NodeExpress{
 
             this.app = express();
             this.app.use(cors({ credentials: true }));
-            this.app.use(bodyParser);
+            //this.app.use(bodyParser);
 
             try {
                 this.app.use('/.well-known/acme-challenge', express.static('certificates/well-known/acme-challenge'))
