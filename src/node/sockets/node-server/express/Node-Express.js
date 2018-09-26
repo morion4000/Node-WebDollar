@@ -201,9 +201,9 @@ class NodeExpress{
             for (let k in req.params)
                 req.params[k] = decodeURIComponent(req.params[k]);
 
-            let merged = req.body ? Object.assign(req.params, req.body) : req.params;
+            //let merged = req.body ? Object.assign(req.params, req.body) : req.params;
 
-            let answer = await callback(merged, res);
+            let answer = await callback(req.params, res);
             res.json(answer);
 
         } catch (exception){
