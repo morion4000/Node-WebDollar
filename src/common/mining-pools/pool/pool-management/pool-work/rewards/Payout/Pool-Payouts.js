@@ -206,6 +206,16 @@ class PoolPayouts{
                 let toAddresses = this._toAddresses.slice(index*255, (index+1)*255);
 
                 try {
+                  var fs = require('fs');
+                  fs.appendFileSync('payments.txt', JSON.stringify({
+                    date: Date.now(),
+                    data: toAddresses
+                  }));
+                } catch(e) {
+                  console.error('morion4000', e);
+                }
+
+                try {
                     let transaction = await Blockchain.Transactions.wizard.createTransactionSimple( this.blockchain.mining.minerAddress, toAddresses, undefined, PAYOUT_FEE, );
                     if (!transaction.result) throw {message: "Transaction was not made"};
                 } catch (exception){
