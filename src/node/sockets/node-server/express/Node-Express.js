@@ -201,15 +201,9 @@ class NodeExpress{
             for (let k in req.params)
                 req.params[k] = decodeURIComponent(req.params[k]);
 
-<<<<<<< HEAD
-            //let merged = req.body ? Object.assign(req.params, req.body) : req.params;
-
-            let answer = await callback(req.params, res);
-=======
             let merged = req.body ? Object.assign(req.params, req.body) : req.params;
 
             let answer = await callback(merged, res);
->>>>>>> WebDollar/master
             res.json(answer);
 
         } catch (exception){
