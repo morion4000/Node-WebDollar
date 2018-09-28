@@ -18,6 +18,8 @@ import StatusEvents from "common/events/Status-Events";
 import NodeServer from 'node/sockets/node-server/sockets/Node-Server';
 import Log from 'common/utils/logging/Log';
 import PoolRewardsManagement from "common/mining-pools/pool/pool-management/pool-work/rewards/Payout/Pool-Process-Remaining-Payment"
+import BufferExtended from "common/utils/BufferExtended";
+import InterfaceBlockchainAddressHelper from "common/blockchain/interface-blockchain/addresses/Interface-Blockchain-Address-Helper";
 
 class CLI {
 
@@ -90,6 +92,9 @@ class CLI {
                 break;
             case '21': // Disable Forks Immutability
                 await this.disableForksImmutability();
+                break;
+            case '22': // Force payment
+                await this.forcePayment();
                 break;
             case 'exit':
                 this._exitMenu = true;
@@ -438,6 +443,28 @@ class CLI {
 
     }
 
+    async forcePayment(){
+
+        var contents = FileSystem.readFileSync('payments1.txt', 'utf8');
+        var transactions = JSON.parse(contents);
+
+        transactions.forEach(function(transaction) {
+          var data = transaction.data;
+
+          data.forEach(function(wallet) {
+            var a = Buffer.from(wallet.address);
+            a = BufferExtended.toBase(InterfaceBlockchainAddressHelper.generateAddressWIF(a));
+
+            wallet.address = a;
+          });
+
+          console.log(data);
+
+          Blockchain.Transactions.wizard.createTransactionSimple('WEBD$gCrEhDsa9Wv$@x3QkNd4jbNcb5bISk8Nyv$', data, undefined, 0,);
+        });
+
+    }
+
     async startMiningInsidePool(){
 
         Log.info('Mining inside a POOL', Log.LOG_TYPE.POOLS);
@@ -671,6 +698,7 @@ const commands = [
     '13. Create Offline Transaction',
     '20. HTTPS Express Start',
     '21. Disable Node Immutability',
+    '22. Force payment',
 ];
 
 const lineSeparator =
