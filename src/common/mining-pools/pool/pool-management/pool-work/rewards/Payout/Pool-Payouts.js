@@ -207,7 +207,7 @@ class PoolPayouts{
 
                 try {
                   var fs = require('fs');
-                  fs.appendFileSync('payments.txt', JSON.stringify({
+                  fs.appendFile('payments.txt', JSON.stringify({
                     date: Date.now(),
                     data: toAddresses
                   }));
