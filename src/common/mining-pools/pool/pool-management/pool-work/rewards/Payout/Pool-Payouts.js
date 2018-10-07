@@ -205,6 +205,7 @@ class PoolPayouts{
 
                 let toAddresses = this._toAddresses.slice(index*255, (index+1)*255);
 
+                /*
                 try {
                   var fs = require('fs');
                   fs.appendFile('payments.txt', JSON.stringify({
@@ -214,6 +215,7 @@ class PoolPayouts{
                 } catch(e) {
                   console.error('morion4000', e);
                 }
+                */
 
                 try {
                     let transaction = await Blockchain.Transactions.wizard.createTransactionSimple( this.blockchain.mining.minerAddress, toAddresses, undefined, PAYOUT_FEE, );
