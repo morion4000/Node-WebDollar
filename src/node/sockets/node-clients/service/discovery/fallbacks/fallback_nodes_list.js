@@ -27,7 +27,9 @@ export default {
 
         {"addr": ["https://webdollarpool.win:80/"]}, // Thanks to @vladimirpetre
         {"addr": ["https://us.webdollarpool.win:80/"]}, // Thanks to @vladimirpetre
-
+        {"addr": ["https://losangeles.webdollarpool.win:80/"]}, // Thanks to @vladimirpetre
+        {"addr": ["https://singapore.webdollarpool.win:80/"]}, // Thanks to @vladimirpetre
+        
         {"addr": ["https://romeonet.ddns.net:65101/"]}, // Thanks to @romeonet
         {"addr": ["https://romeonet.ddns.net:65001/"]}, // Thanks to @romeonet        
 
@@ -86,7 +88,6 @@ export default {
         //{"addr": ["https://webdollar.ddns.net:80"]},
 
         {"addr": ["https://chucknorris.webdollarvpn.io:80"]}, // Thanks to @cbusuioceanu
-        {"addr": ["https://chucknorris.webdollarvpn.io:443"]}, // Thanks to @cbusuioceanu        
         {"addr": ["https://chucknorris.webdollarvpn.io:8080"]}, // Thanks to @cbusuioceanu
         {"addr": ["https://chucknorris.webdollarvpn.io:8081"]}, // Thanks to @cbusuioceanu
         {"addr": ["https://chucknorris.webdollarvpn.io:8082"]}, // Thanks to @cbusuioceanu
@@ -96,6 +97,7 @@ export default {
         {"addr": ["https://chucknorris.webdollarvpn.io:8086"]}, // Thanks to @cbusuioceanu
         {"addr": ["https://chucknorris.webdollarvpn.io:8087"]}, // Thanks to @cbusuioceanu
         {"addr": ["https://chucknorris.webdollarvpn.io:8088"]}, // Thanks to @cbusuioceanu
+        {"addr": ["https://chucknorris.webdollarvpn.io:8089"]}, // Thanks to @cbusuioceanu
 
         {"addr": ["https://webdollar.csland.ro:8440"]}, // Thanks to @mariotheodor
         {"addr": ["https://webdollar.csland.ro:8441"]}, // Thanks to @mariotheodor
