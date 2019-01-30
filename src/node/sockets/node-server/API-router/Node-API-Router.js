@@ -61,6 +61,8 @@ class NodeAPIRouter{
 
             this._addRoute(process.env.WALLET_SECRET_URL+'/wallets/export', NodeAPIPrivate.walletExport, nodeApiType, 100, app, prefix, middleWare );
 
+            this._addRoute(process.env.WALLET_SECRET_URL+'/wallets/create-wallet', NodeAPIPrivate.walletCreate, nodeApiType, 100, app, prefix, middleWare );
+
         }
 
         // Return address info: balance, blocks mined and transactions
@@ -84,7 +86,6 @@ class NodeAPIRouter{
         this._addRoute( 'ping', NodeAPIPublic.ping, nodeApiType, 1000, app, prefix, middleWare );
 
         this._addRoute( 'list', this.showRoutes.bind(this), nodeApiType, 200 , app, prefix, middleWare );
-
 
     }
 

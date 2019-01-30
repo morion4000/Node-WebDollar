@@ -24,7 +24,7 @@ class InterfaceBlockchainBlockDataTransactions {
 
         this.transactions.forEach((transaction) => {
             transaction.confirmed = true;
-            this.blockData.blockchain.transactions.pendingQueue._removePendingTransaction(transaction);
+            // this.blockData.blockchain.transactions.pendingQueue.removePendingTransaction(transaction);
         });
 
     }
@@ -52,7 +52,7 @@ class InterfaceBlockchainBlockDataTransactions {
             return;
 
         for (let i=0; i<this.transactions.length; i++) {
-            if (this.transactions[i].pendingTransactionsIncluded === undefined) this.transactions[i].pendingTransactionsIncluded = 0;
+            if ( !this.transactions[i].pendingTransactionsIncluded ) this.transactions[i].pendingTransactionsIncluded = 0;
             this.transactions[i].pendingTransactionsIncluded++;
         }
 
@@ -64,15 +64,19 @@ class InterfaceBlockchainBlockDataTransactions {
 
         for (let i=0; i<this.transactions.length; i++) {
 
-            this.transactions[i].destroyTransaction(this.pendingTransactionsWereIncluded);
+            if (this.pendingTransactionsWereIncluded)
+                this.transactions[i].pendingTransactionsIncluded--;
+
+            if (this.pendingTransactionsWereIncluded <= 0) this.pendingTransactionsWereIncluded = undefined;
+
+            if ( !this.pendingTransactionsWereIncluded && !Blockchain.blockchain.transactions.pendingQueue.findPendingTransaction(this.transactions[i].txId)  )
+                this.transactions[i].destroyTransaction();
 
             this.transactions[i] = undefined;
-            this.transactions.splice(i,1);
-            i--;
 
         }
-
         this.transactions = [];
+
         delete this.pendingTransactionsWereIncluded;
 
     }

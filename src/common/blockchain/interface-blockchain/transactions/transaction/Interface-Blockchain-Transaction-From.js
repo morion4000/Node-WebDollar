@@ -53,7 +53,6 @@ class InterfaceBlockchainTransactionFrom {
             currencyTokenId = addresses.currencyTokenId;
         }
 
-
         if (!Array.isArray(addresses))
             addresses = [addresses];
 

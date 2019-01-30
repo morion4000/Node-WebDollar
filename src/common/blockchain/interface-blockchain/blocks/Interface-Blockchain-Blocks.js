@@ -3,8 +3,11 @@ import StatusEvents from "common/events/Status-Events"
 
 const BigInteger = require('big-integer');
 const BigNumber = require('bignumber.js');
+import BlockchainGenesis from './../../../../common/blockchain/global/Blockchain-Genesis'
 
 import Serialization from "common/utils/Serialization";
+import InterfaceBlockchainBlockTimestamp from "./../blocks/Interface-Blockchain-Block-Timestamp"
+import WebDollarCrypto from "../../../crypto/WebDollar-Crypto";
 
 /**
  * It creates like an Array of Blocks. In case the Block doesn't exist, it will be stored as `undefined`
@@ -27,6 +30,7 @@ class InterfaceBlockchainBlocks{
         if (consts.SETTINGS.FREE_TRANSACTIONS_FROM_MEMORY_MAX_NUMBER > 0)
             setTimeout( this._freeAllBlocksTransactionsFromMemory.bind(this), 100000 );
 
+        this.timestampBlocks = new InterfaceBlockchainBlockTimestamp(blockchain);
     }
 
     addBlock(block, revertActions, saveBlock, showUpdate = true){
@@ -87,7 +91,11 @@ class InterfaceBlockchainBlocks{
                 }
                 else
                     this[i] = undefined;
+
             }
+
+        if (this.length === 0)
+            this._chainWork =  new BigInteger(0);
 
         this.length = after;
 
@@ -119,19 +127,24 @@ class InterfaceBlockchainBlocks{
         return this[ this.blocksStartingPoint ];
     }
 
-    recalculateNetworkHashRate(){
+    recalculateNetworkHashRate (){
 
         let MaxTarget = consts.BLOCKCHAIN.BLOCKS_MAX_TARGET;
-        let SumDiff = new BigNumber( 0 );
+        let diff;
+
+        let SumDiffPoS = new BigNumber( 0 );
+        let SumDiffPoW = new BigNumber( 0 );
 
         let last, first;
-        for (let i = Math.max(0, this.blockchain.blocks.endingPosition - consts.BLOCKCHAIN.DIFFICULTY.NO_BLOCKS); i<this.blockchain.blocks.endingPosition; i++) {
+        for (let i = Math.max(0, this.blockchain.blocks.endingPosition - consts.BLOCKCHAIN.DIFFICULTY.NO_BLOCKS*3); i<this.blockchain.blocks.endingPosition; i++) {
 
             if (this.blockchain.blocks[i] === undefined) continue;
+            diff = MaxTarget.dividedBy( new BigNumber ( "0x"+ this.blockchain.blocks[i].difficultyTarget.toString("hex") ) );
 
-            let diff = MaxTarget.dividedBy( new BigNumber ( "0x"+ this.blockchain.blocks[i].difficultyTarget.toString("hex") ) );
-            SumDiff = SumDiff.plus( diff );
-
+            if( BlockchainGenesis.isPoSActivated( this.blockchain.blocks[i].height ) )
+                SumDiffPoS = SumDiffPoS.plus( diff );
+            else
+                SumDiffPoW = SumDiffPoW.plus( diff );
 
             if (!first) first = i;
             last = i;
@@ -139,13 +152,15 @@ class InterfaceBlockchainBlocks{
         }
 
         let how_much_it_took_to_mine_X_Blocks = this.blockchain.getTimeStamp( last ) - this.blockchain.getTimeStamp( first );
+        let answer;
 
-        let answer = SumDiff.dividedToIntegerBy(new BigNumber(how_much_it_took_to_mine_X_Blocks)).toFixed(15);
-        answer = parseFloat(answer);
+        if( BlockchainGenesis.isPoSActivated(this.blockchain.blocks.length-1) )
+            answer = SumDiffPoS.dividedToIntegerBy(new BigNumber(how_much_it_took_to_mine_X_Blocks.toString() )).toFixed(13);
+        else
+            answer = SumDiffPoW.dividedToIntegerBy(new BigNumber(how_much_it_took_to_mine_X_Blocks.toString() )).toFixed(13);
 
-        this.networkHashRate = answer;
-        
-        return answer;
+        this.networkHashRate = parseFloat(answer);
+        return parseFloat(answer);
 
     }
 

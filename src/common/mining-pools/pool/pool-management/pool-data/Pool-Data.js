@@ -103,7 +103,7 @@ class PoolData {
 
     addBlockInformation(){
 
-        let blockInformation = new PoolDataBlockInformation(this.poolManagement, this.blocksInfo.length, undefined, undefined, Blockchain.blockchain.blocks.length );
+        let blockInformation = new PoolDataBlockInformation(this.poolManagement, this.blocksInfo.length, undefined, undefined, undefined, Blockchain.blockchain.blocks.length );
         this.blocksInfo.push(blockInformation);
 
         return blockInformation;
@@ -222,7 +222,7 @@ class PoolData {
             this.blocksInfo = [];
             for (let i = 0; i < numBlocksInformation && offset < buffer.length; i++) {
 
-                let blockInformation = new PoolDataBlockInformation(this.poolManagement, this.blocksInfo.length, undefined, undefined, Blockchain.blockchain.blocks.length );
+                let blockInformation = new PoolDataBlockInformation(this.poolManagement, this.blocksInfo.length, undefined, undefined, undefined, Blockchain.blockchain.blocks.length );
                 offset = await blockInformation.deserializeBlockInformation(buffer, offset );
 
                 if (blockInformation.blockInformationMinersInstances.length > 0) {
@@ -285,6 +285,12 @@ class PoolData {
             let buffer = await this._db.get("blocksInformation", 60000, true);
 
             if (buffer !== null) {
+
+                if (consts.DEBUG) {
+                    console.log('Pool Data is not loaded in Debug');
+                    return true;
+                }
+
                 let response = await this._deserializeBlockInformation(buffer);
 
                 if (response !== true) {

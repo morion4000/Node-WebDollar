@@ -1,5 +1,6 @@
+/* eslint-disable */
 const FileSystem = require('fs');
-
+import {JsonRpcServer} from './../jsonRpc';
 let NodeExpress, NodeServer;
 
 if (!process.env.BROWSER) {
@@ -89,6 +90,9 @@ class CLI {
                 break;
             case '20':  // Server Mining Pool: Create a new Server for Mining Pool
                 NodeExpress.startExpress();
+                break;
+            case '30':  // Set Password
+                await Blockchain.Mining.setPrivateKeyAddressForMiningAddress();
                 break;
             case '21': // Disable Forks Immutability
                 await this.disableForksImmutability();
@@ -185,6 +189,8 @@ class CLI {
         this._showCommands();
         AdvancedMessages.WEBD_CLI.prompt();
 
+        JsonRpcServer(consts.JSON_RPC);
+
         this._exitMenu = false;
         await this._runMenu();
     }
@@ -240,11 +246,11 @@ class CLI {
 
             balance = (balance === null) ? 0 : (balance / WebDollarCoins.WEBD);
 
-            if (address === miningAddress) {
+            if (address === miningAddress)
                 console.log(((i < 10) ? "|  *" : "| *") + i + "   |  " + address + "  | " + balance + lineSeparator);
-            } else {
+            else
                 console.log(((i < 10) ? "|   " : "|  ")+ i + "   |  " + address + "  | " + balance + lineSeparator);
-            }
+
         }
 
         let balance = 0;
@@ -318,6 +324,9 @@ class CLI {
                     if (answer.result === true) {
                         console.log("Address successfully imported", answer.address);
                         await Blockchain.Wallet.saveWallet();
+
+                        if(Blockchain.Wallet.addresses.length===1) Blockchain.blockchain.mining.minerAddress = Blockchain.Wallet.addresses[0].address;
+
                         resolve(true);
                     } else {
                         console.error(answer.message);
@@ -427,6 +436,8 @@ class CLI {
     }
 
     async startMining(instantly){
+
+
 
         await this._callCallbackBlockchainSync( undefined, async ()=>{
 
@@ -682,24 +693,25 @@ class CLI {
 }
 
 const commands = [
-    '1. List addresses',
-    '2. Create new address',
-    '3. Delete address',
-    '4. Import address',
-    '5. Export address',
-    '6. Encrypt address',
-    '7. Set mining address',
-    '8. Solo: Start Mining',
-    '9. Solo: Start Mining Instantly Even Unsynchronized',
-    '10. Mining Pool: Start Mining',
-    '11. Mining Pool: Create a New Pool',
-    '11-1. Mining Pool: Process Remaining Payment',
-    '12. Server for Mining Pool: Create a new Server for Mining Pool (Optional and Advanced)',
-    '13. Create Offline Transaction',
-    '20. HTTPS Express Start',
-    '21. Disable Node Immutability',
-    '22. Force payment',
-];
+        '1. List addresses',
+        '2. Create new address',
+        '3. Delete address',
+        '4. Import address',
+        '5. Export address',
+        '6. Encrypt address',
+        '7. Set mining address',
+        '8. Solo: Start Mining',
+        '9. Solo: Start Mining Instantly Even Unsynchronized',
+        '10. Mining Pool: Start Mining',
+        '11. Mining Pool: Create a New Pool',
+        '11-1. Mining Pool: Process Remaining Payment',
+        '12. Server for Mining Pool: Create a new Server for Mining Pool (Optional and Advanced)',
+        '13. Create Offline Transaction',
+        '20. HTTPS Express Start',
+        '21. Disable Node Immutability',
+        '30. Set Password for Mining Address',
+    ];
+
 
 const lineSeparator =
     "\n|_______|____________________________________________|_________________|";

@@ -194,12 +194,12 @@ class MainBlockchainWallet {
         if (typeof address === "object" && address.hasOwnProperty("address"))
             address = address.address;
 
-        for (let i = 0; i < this.addresses.length; i++)
-            if (address === this.addresses[i].address || address === this.addresses[i])
-                return returnPos ? i : this.addresses[i];
-            else
-            if (typeof address ==="object" && (this.addresses[i].address === address.address || this.addresses[i].unencodedAddress === address.unencodedAddress))
-                return returnPos ? i : this.addresses[i];
+        for (let i = 0; i < this.addresses.length; i++) {
+
+            if (typeof address === "string" && address === this.addresses[i].address) return returnPos ? i : this.addresses[i];
+            else if (Buffer.isBuffer(address) && address.equals( this.addresses[i].unencodedAddress) ) return returnPos ? i : this.addresses[i];
+            else if (typeof address === "object" && !Buffer.isBuffer(address) && (this.addresses[i].address === address.address || this.addresses[i].unencodedAddress.equals(address.unencodedAddress))) return returnPos ? i : this.addresses[i];
+        }
 
         return returnPos ? -1 : null;
 
@@ -558,7 +558,7 @@ class MainBlockchainWallet {
             AdvancedMessages.log("Address deleted " + addressToDelete, "Address deleted " + addressToDelete.toString());
 
             //setting the next minerAddress
-            if (this.blockchain.mining.minerAddress === undefined || BufferExtended.safeCompare(this.blockchain.mining.unencodedMinerAddress, addressToDelete.unencodedAddress) ) {
+            if (!this.blockchain.mining.minerAddress || BufferExtended.safeCompare(this.blockchain.mining.unencodedMinerAddress, addressToDelete.unencodedAddress) ) {
                 this.blockchain.mining.minerAddress = this.addresses.length > 0 ? this.addresses[0].address : undefined;
                 this.blockchain.mining.resetMining();
             }

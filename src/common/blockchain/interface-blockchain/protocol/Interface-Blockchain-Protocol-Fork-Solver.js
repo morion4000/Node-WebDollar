@@ -26,7 +26,7 @@ class InterfaceBlockchainProtocolForkSolver{
 
             let mid = Math.trunc((left + right) / 2);
 
-            answer = await socket.node.sendRequestWaitOnce("head/hash", mid, mid, consts.SETTINGS.PARAMS.CONNECTIONS.TIMEOUT.WAIT_ASYNC_DISCOVERY_TIMEOUT);
+            answer = await socket.node.sendRequestWaitOnce("head/chainHash", mid, mid, consts.SETTINGS.PARAMS.CONNECTIONS.TIMEOUT.WAIT_ASYNC_DISCOVERY_TIMEOUT);
 
             console.log("_discoverForkBinarySearch", initialLeft, "left", left, "right ", right);
 
@@ -37,19 +37,19 @@ class InterfaceBlockchainProtocolForkSolver{
             if (left >= right) {
 
                 //it the block actually is the same
-                if (answer.hash.equals( this.blockchain.getHashPrev( mid+1 ) ) )
+                if (answer.hash.equals( this.blockchain.getChainHash( mid + 1 ) ) )
                     return {position: mid, header: answer.hash };
                 else {
 
                     //it is not a match, but it was previously a match
                     if (mid-1 >= 0 && initialLeft <= mid-1 && initialLeft < left){
 
-                        answer = await socket.node.sendRequestWaitOnce("head/hash", mid-1, mid-1, consts.SETTINGS.PARAMS.CONNECTIONS.TIMEOUT.WAIT_ASYNC_DISCOVERY_TIMEOUT );
+                        answer = await socket.node.sendRequestWaitOnce("head/chainHash", mid-1, mid-1, consts.SETTINGS.PARAMS.CONNECTIONS.TIMEOUT.WAIT_ASYNC_DISCOVERY_TIMEOUT );
 
                         if (answer === null || !Buffer.isBuffer(answer.hash))
                             return {position: null, header: answer }; // timeout
 
-                        if (answer.hash.equals( this.blockchain.getHashPrev(mid-1 +1) ) ) // it is a match
+                        if (answer.hash.equals( this.blockchain.getChainHash(mid -1 + 1 ) ) ) // it is a match
                             return {position: mid-1, header: answer.hash };
 
                     }
@@ -60,7 +60,7 @@ class InterfaceBlockchainProtocolForkSolver{
             }
 
             //was not not found, search left because it must be there
-            if (! answer.hash.equals( this.blockchain.getHashPrev(mid+1)  ) )
+            if (! answer.hash.equals( this.blockchain.getChainHash(mid + 1)  ) )
                 return await this._discoverForkBinarySearch(socket, initialLeft, left, mid);
             else
             //was found, search right because the fork must be there
@@ -99,7 +99,7 @@ class InterfaceBlockchainProtocolForkSolver{
         may the fork be with you Otto
      */
 
-    async discoverFork(socket, forkChainLength, forkChainStartingPoint, forkLastBlockHash, forkProof, forkChainWork ){
+    async discoverFork(socket, forkChainLength, forkChainStartingPoint, forkLastChainHash, forkProof, forkChainWork ){
 
         let binarySearchResult = {position: -1, header: null };
         let currentBlockchainLength = this.blockchain.blocks.length;
@@ -108,10 +108,10 @@ class InterfaceBlockchainProtocolForkSolver{
 
         try {
 
-            let answer = this.blockchain.forksAdministrator.findFork(socket, forkLastBlockHash, forkProof);
+            let answer = this.blockchain.forksAdministrator.findFork(socket, forkLastChainHash, forkProof);
             if (answer !== null) return answer;
 
-            fork = await this.blockchain.forksAdministrator.createNewFork( socket, undefined, undefined, undefined, undefined, [ forkLastBlockHash ], false );
+            fork = await this.blockchain.forksAdministrator.createNewFork( socket, undefined, undefined, undefined, undefined, [ forkLastChainHash ], false );
 
             //veify last n elements
             const count = 6;
@@ -119,10 +119,10 @@ class InterfaceBlockchainProtocolForkSolver{
             if ( currentBlockchainLength >= count && ( forkChainLength >= currentBlockchainLength ||  (this.blockchain.agent.light && forkProof) )  )
                 for (let i = currentBlockchainLength-1; i >= currentBlockchainLength-1-count; i--){
 
-                    if (i === forkChainLength-1 && forkLastBlockHash !== undefined && forkLastBlockHash !== undefined) {
-                        answer = { hash: forkLastBlockHash };
+                    if (i === forkChainLength-1 && forkLastChainHash !== undefined && forkLastChainHash !== undefined) {
+                        answer = { hash: forkLastChainHash };
                     } else {
-                        answer = await socket.node.sendRequestWaitOnce( "head/hash", i, i, consts.SETTINGS.PARAMS.CONNECTIONS.TIMEOUT.WAIT_ASYNC_DISCOVERY_TIMEOUT );
+                        answer = await socket.node.sendRequestWaitOnce( "head/chainHash", i, i, consts.SETTINGS.PARAMS.CONNECTIONS.TIMEOUT.WAIT_ASYNC_DISCOVERY_TIMEOUT );
                         if (answer === null || answer === undefined || answer.hash === undefined)
                             continue;
                     }
@@ -132,7 +132,7 @@ class InterfaceBlockchainProtocolForkSolver{
                     if (forkFound !== null && forkFound !== fork) {
                         if (Math.random() < 0.01) console.error("discoverAndProcessFork - fork already found by n-2");
 
-                        forkFound.pushHeaders( fork.forkHeaders ); //this leads to a new fork
+                        forkFound.pushHeaders( fork.forkHeaders ); //this lead to a new fork
                         forkFound.pushSocket(socket, forkProof);
 
                         this.blockchain.forksAdministrator.deleteFork(fork); //destroy fork
@@ -142,7 +142,7 @@ class InterfaceBlockchainProtocolForkSolver{
 
                     fork.pushHeader(answer.hash);
 
-                    if (this.blockchain.blocks[i].hash.equals(answer.hash)){
+                    if (this.blockchain.blocks[i].calculateNewChainHash().equals(answer.hash)){
 
                         binarySearchResult = {
                             position: (i === currentBlockchainLength-1)  ? currentBlockchainLength :  i+1,
@@ -182,7 +182,7 @@ class InterfaceBlockchainProtocolForkSolver{
 
                     if (Math.random() < 0.01) console.error("discoverAndProcessFork - fork already found by hash after binary search");
 
-                    forkFound.pushHeader( forkLastBlockHash );
+                    forkFound.pushHeader( forkLastChainHash );
                     forkFound.pushSocket( socket, forkProof );
 
                     this.blockchain.forksAdministrator.deleteFork(fork); //destroy fork
@@ -326,11 +326,12 @@ class InterfaceBlockchainProtocolForkSolver{
                     }
 
                     socketIndex++;
+                    if (! trialsList[index] ) trialsList[index] = 0
                     trialsList[index] ++ ;
 
                     let socket = fork.getForkSocket(socketIndex);
 
-                    if (socket === undefined) {
+                    if ( !socket ) {
 
                         await this.blockchain.sleep(5);
 
@@ -382,7 +383,7 @@ class InterfaceBlockchainProtocolForkSolver{
                     trialsList[i] = 0;
 
                 for (let i=0; i < howManyBlocks; i++)
-                    if (downloadingList[i] === undefined)
+                    if ( !downloadingList[i] )
                         downloadingBlock(i);
 
 
@@ -417,8 +418,8 @@ class InterfaceBlockchainProtocolForkSolver{
                 if (fork.downloadBlocksSleep && nextBlockHeight % 10 === 0)
                     await this.blockchain.sleep(15);
 
-                if (this.blockchain.blocks[block.height] !== undefined && block.hash.equals(this.blockchain.blocks[block.height].hash) )
-                    throw {message: "You gave me a block which I already have"};
+                if (this.blockchain.blocks[block.height] !== undefined && block.calculateNewChainHash().equals(this.blockchain.blocks[block.height].calculateNewChainHash() ) )
+                    throw {message: "You gave me a block which I already have have the same block"};
 
                 let result;
 
@@ -475,7 +476,7 @@ class InterfaceBlockchainProtocolForkSolver{
             if (!this.protocol.acceptBlocks && this.protocol.acceptBlockHeaders)
                 block.data._onlyHeader = true; //avoiding to store the transactions
 
-            block.deserializeBlock( blockData, blockHeight, undefined, fork.getForkDifficultyTarget(block.height) );
+            block.deserializeBlock( blockData, blockHeight, undefined );
 
         } catch (Exception) {
             console.error("Error deserializing blocks ", Exception, blockData);

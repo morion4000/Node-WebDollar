@@ -36,7 +36,7 @@ class PoolWork {
     findBlockById(blockId, blockHeight){
 
         for (let i=0; i<this._blocksList.length; i++)
-            if ( (blockId !== undefined && this._blocksList[i].blockId === blockId ) || ( this._blocksList[i].block.height === blockHeight ) ){
+            if ( (blockId && this._blocksList[i].blockId === blockId ) || ( this._blocksList[i].block.height === blockHeight ) ){
                 return this._blocksList[i].block;
             }
 
@@ -62,18 +62,17 @@ class PoolWork {
 
             this.lastBlockNonce = 0;
 
+            //fill with blank info
+            this.lastBlock.hash = new Buffer( consts.BLOCKCHAIN.BLOCKS_POW_LENGTH );
+            if (BlockchainGenesis.isPoSActivated(this.lastBlock.height)) {
+                this.lastBlock.posMinerPublicKey = new Buffer(consts.ADDRESSES.PUBLIC_KEY.LENGTH );
+                this.lastBlock.posSignature = new Buffer(consts.TRANSACTIONS.SIGNATURE_SCHNORR.LENGTH );
+            }
 
             let error = false;
             try{
 
-                if (this.lastBlock.computedBlockPrefix === undefined )
-                    this.lastBlock._computeBlockHeaderPrefix();
-
-                this.lastBlockSerialization = Buffer.concat( [
-                    Serialization.serializeBufferRemovingLeadingZeros( Serialization.serializeNumber4Bytes(this.lastBlock.height) ),
-                    Serialization.serializeBufferRemovingLeadingZeros( this.lastBlock.difficultyTargetPrev ),
-                    this.lastBlock.computedBlockPrefix
-                ]);
+                this.lastBlockSerialization = this.lastBlock.serializeBlock(true );
 
             } catch (exception){
 
@@ -103,7 +102,10 @@ class PoolWork {
             }
 
             if  (!this.blockchain.semaphoreProcessing.processing && ( this.lastBlock.height !==  this.blockchain.blocks.length || !this.lastBlock.hashPrev.equals( this.blockchain.blocks.last.hash ))) {
-                console.error("ERRRORR!!! HASHPREV DOESN'T MATCH blocks.last.hash");
+
+                if (consts.DEBUG)
+                    console.error("ERROR!!! POOL MINING LAST BLOCK WAS CHANGED. HASHPREV DOESN'T MATCH blocks.last.hash");
+
                 resolve(false);
                 return;
             }
@@ -126,15 +128,15 @@ class PoolWork {
             //verify if the block was a solution to a block
             let found = false;
             for (let j =0 ; j < this.poolManagement.poolData.blocksInfo.length; j++)
-                if ( this.poolManagement.poolData.blocksInfo[j].block !== undefined && this._blocksList[i].block !== undefined &&
-                     (this.poolManagement.poolData.blocksInfo[j].block === this._blocksList[i].block || ( this._blocksList[i].block.hash !== null && this.poolManagement.poolData.blocksInfo[j].block.hash.equals(this._blocksList[i].block.hash) )) ){
+                if ( this.poolManagement.poolData.blocksInfo[j].block && this._blocksList[i].block &&
+                     (this.poolManagement.poolData.blocksInfo[j].block === this._blocksList[i].block || ( this._blocksList[i].block.hash && this.poolManagement.poolData.blocksInfo[j].block.hash.equals(this._blocksList[i].block.hash) )) ){
                     found = true;
                     break;
                 }
 
             if (!found)
                 //delete block
-                if ( this._blocksList[i].block !== this.lastBlock && ( (time - this._blocksList[i].block.timeStamp ) > 20*consts.BLOCKCHAIN.DIFFICULTY.TIME_PER_BLOCK) && this._blocksList[i].block.height < this.blockchain.blocks.length - 20 ) {
+                if ( this._blocksList[i].block !== this.lastBlock && ( (time - this._blocksList[i].block.timeStamp ) > 200*consts.BLOCKCHAIN.DIFFICULTY.TIME_PER_BLOCK) && this._blocksList[i].block.height < this.blockchain.blocks.length - 100 ) {
 
                     Log.warn("==========================================", Log.LOG_TYPE.POOLS);
                     Log.warn("GARBAGE COLLECTOR DELETE BLOCK "+ this._blocksList[i].blockId +" height "+this._blocksList[i].block.height, Log.LOG_TYPE.POOLS);

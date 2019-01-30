@@ -139,10 +139,13 @@ class InterfaceBlockchainFork {
 
                 }
 
+                if(consts.DEBUG) return true;
+
                 if (addresses.length >= 1)  //in my fork, there were also other miners, and not just me
                     throw {message: "Validate for Immutability failed"};
                 else
                     return true; //there were just 3 miners, probably it is my own fork...
+
 
             }
 
@@ -188,6 +191,11 @@ class InterfaceBlockchainFork {
         if (block.height < this.forkStartingHeight) throw {message: 'block height is smaller than the fork itself', blockHeight: block.height, forkStartingHeight:this.forkStartingHeight };
         if (block.height !== height) throw {message:"block height is different than block's height", blockHeight: block.height, height:height};
 
+
+        //if it is a POS block, I can't validate the block
+        if (BlockchainGenesis.isPoSActivated(block.height))
+            block.blockValidation.blockValidationType["skip-validation-PoW-hash"] = true;
+
         let result = await this.blockchain.validateBlockchainBlock( block );
 
         return result;
@@ -204,83 +212,101 @@ class InterfaceBlockchainFork {
 
         if (height <= 0)
             return BlockchainGenesis; // based on genesis block
-        else if ( forkHeight === 0)
-            return this.blockchain.getBlock(height);
-        else if ( forkHeight > 0)
-            return this.forkBlocks[forkHeight - 1]; // just the fork
-        else
-            return this.blockchain.getBlock(height) // the blockchain
+
+        if ( forkHeight === 0) return this.blockchain.getBlock(height);
+
+        if ( forkHeight > 0) return this.forkBlocks[forkHeight - 1]; // just the fork
+        return this.blockchain.getBlock(height) // the blockchain
+
     }
 
     // return the difficultly target for ForkBlock
-    getForkDifficultyTarget(height){
+    getForkDifficultyTarget(height, POSRecalculation = true){
+
 
         let forkHeight = height - this.forkStartingHeight;
 
-        if (height === 0)
-            return BlockchainGenesis.difficultyTarget; // based on genesis block
-        else if ( forkHeight === 0)
-            return this.blockchain.getDifficultyTarget(height);
-        else if ( forkHeight > 0) {
+        if (height === 0) return BlockchainGenesis.difficultyTarget; // based on genesis block
+        if (height === consts.BLOCKCHAIN.HARD_FORKS.POS_ACTIVATION) return BlockchainGenesis.difficultyTargetPOS;
 
-            if ( forkHeight-1 >= this.forkBlocks.length )
-                Log.warn("getForkDifficultyTarget FAILED: "+  forkHeight, Log.LOG_TYPE.BLOCKCHAIN_FORKS);
+        if ( forkHeight === 0)
+            return this.blockchain.getDifficultyTarget(height);
+
+        let heightPrePOS = height;
+        if (height >= consts.BLOCKCHAIN.HARD_FORKS.POS_ACTIVATION) {
+
+            //calculating the virtualization of the POS
+            if (height % 30 === 0) height = height - 10;  //first POS, get the last proof of Stake
+            else if (height % 30 === 20) height = height - 20; //first POW, get the last proof of Work
+
+            forkHeight = height - this.forkStartingHeight;
+        }
+
+
+        if ( forkHeight > 0) {
+
+            if ( forkHeight - 1 >= this.forkBlocks.length )
+                throw { message: "getForkDifficultyTarget FAILED: "+  forkHeight };
 
             return this.forkBlocks[forkHeight - 1].difficultyTarget; // just the fork
         }
-        else
-            return this.blockchain.getDifficultyTarget(height) // the blockchain
+
+        return this.blockchain.getDifficultyTarget(heightPrePOS, POSRecalculation) // the blockchain
+
     }
 
     getForkTimeStamp(height){
 
         let forkHeight = height - this.forkStartingHeight;
 
-        if (height === 0)
-            return BlockchainGenesis.timeStamp; // based on genesis block
-        else if ( forkHeight === 0)
-            return this.blockchain.getTimeStamp(height); // based on previous block from blockchain
-        else if ( forkHeight > 0)
-            return this.forkBlocks[forkHeight - 1].timeStamp; // just the fork
-        else
-            return this.blockchain.getTimeStamp(height) // the blockchain
+        if (height === 0) return BlockchainGenesis.timeStamp; // based on genesis block
+
+        if ( forkHeight === 0) return this.blockchain.getTimeStamp(height); // based on previous block from blockchain
+        if ( forkHeight > 0) return this.forkBlocks[forkHeight - 1].timeStamp; // just the fork
+
+        return this.blockchain.getTimeStamp(height) // the blockchain
 
     }
 
     getForkPrevHash(height){
         let forkHeight = height - this.forkStartingHeight;
 
-        if (height === 0)
-            return BlockchainGenesis.hashPrev; // based on genesis block
-        else if ( forkHeight === 0)
-            return this.blockchain.getHashPrev(height); // based on previous block from blockchain
-        else if ( forkHeight > 0)
-            return this.forkBlocks[forkHeight - 1].hash; // just the fork
-        else
-            return this.blockchain.getHashPrev(height) // the blockchain
+        if (height === 0) return BlockchainGenesis.hashPrev; // based on genesis block
+
+        if ( forkHeight === 0) return this.blockchain.getHashPrev(height); // based on previous block from blockchain
+        if ( forkHeight > 0) return this.forkBlocks[forkHeight - 1].hash; // just the fork
+
+        return this.blockchain.getHashPrev(height) // the blockchain
+    }
+
+    getForkChainHash(height){
+
+        let forkHeight = height - this.forkStartingHeight;
+
+        if (height === 0) return BlockchainGenesis.hashPrev;
+
+        if ( forkHeight === 0) return this.blockchain.getChainHashCallback(height);
+        if (forkHeight > 0) return this.forkBlocks[forkHeight - 1].hashChain;
+
+        return this.blockchain.getChainHash(height);
+
     }
 
     _createBlockValidation_ForkValidation(height, forkHeight){
 
         let validationType = {};
 
-        if (height === this.forkChainLength-1)
-            validationType["validation-timestamp-adjusted-time"] = true;
-
-        return new InterfaceBlockchainBlockValidation(this.getForkBlock.bind(this), this.getForkDifficultyTarget.bind(this), this.getForkTimeStamp.bind(this), this.getForkPrevHash.bind(this), validationType );
+        return new InterfaceBlockchainBlockValidation(this.getForkBlock.bind(this), this.getForkDifficultyTarget.bind(this), this.getForkTimeStamp.bind(this), this.getForkPrevHash.bind(this), this.getForkChainHash.bind(this), validationType );
     }
 
     _createBlockValidation_BlockchainValidation(height, forkHeight){
 
         let validationType = {};
 
-        if (height === this.forkChainLength-1)
-            validationType["validation-timestamp-adjusted-time"] = true;
-
         if (height !== this.forkChainLength-1)
             validationType["skip-calculating-proofs"] = true;
 
-        return new InterfaceBlockchainBlockValidation(this.getForkBlock.bind(this), this.getForkDifficultyTarget.bind(this), this.getForkTimeStamp.bind(this), this.getForkPrevHash.bind(this), validationType );
+        return new InterfaceBlockchainBlockValidation(this.getForkBlock.bind(this), this.getForkDifficultyTarget.bind(this), this.getForkTimeStamp.bind(this), this.getForkPrevHash.bind(this), this.getForkChainHash.bind(this), validationType );
     }
 
     sleep(ms) {
@@ -615,12 +641,12 @@ class InterfaceBlockchainFork {
 
             });
 
-            this.forkBlocks.forEach((block)=> {
-
-                if (block.data !==  undefined && block.data.transactions !== undefined)
-                    block.data.transactions.confirmTransactions();
-
-            });
+            // this.forkBlocks.forEach((block)=> {
+            //
+            //     if (block.data !==  undefined && block.data.transactions !== undefined)
+            //         block.data.transactions.confirmTransactions();
+            //
+            // });
 
         } else {
 
@@ -631,13 +657,12 @@ class InterfaceBlockchainFork {
 
             });
 
-
-            this._blocksCopy.forEach( (block) => {
-
-                if (block.data !==  undefined && block.data.transactions !== undefined)
-                    block.data.transactions.confirmTransactions();
-
-            });
+            // this._blocksCopy.forEach( (block) => {
+            //
+            //     if (block.data !==  undefined && block.data.transactions !== undefined)
+            //         block.data.transactions.confirmTransactions();
+            //
+            // });
 
         }
 

@@ -26,12 +26,38 @@ class NodesList {
 
         this.nodes = [];
         this.nodesTotal = 0;
+        this.consensusBlock = 0;
 
         setInterval( this.recalculateSocketsLatency.bind(this), consts.SETTINGS.PARAMS.LATENCY_CHECK );
 
         this.removeDisconnectedSockets();
     }
 
+    isConsensus(blockchainHeight){
+
+        let blocksList={};
+        let consensusHeightNodes=0;
+
+        if(typeof this.nodes !== "undefined")
+            for(let i=0;i<this.nodes.length;i++)
+                if(typeof this.nodes[i].socket.node.protocol.blocks !== "undefined" && this.nodes[i].socket.node.protocol.blocks !== 0)
+                    if(typeof blocksList[this.nodes[i].socket.node.protocol.blocks] === "undefined")
+                        blocksList[this.nodes[i].socket.node.protocol.blocks]=1;
+                    else
+                        blocksList[this.nodes[i].socket.node.protocol.blocks]++;
+
+        for(let key in blocksList)
+            if(blocksList[key] > consensusHeightNodes && parseInt(key) >= parseInt(this.consensusBlock)){
+                consensusHeightNodes = blocksList[key];
+                this.consensusBlock = parseInt(key);
+            }
+
+        if(blockchainHeight>5 && blockchainHeight > this.consensusBlock-4)
+            return true;
+        else
+            return false
+
+    }
 
     searchNodeSocketByAddress(sckAddress, connectionType, validationDoubleConnectionsTypes){
 
@@ -122,7 +148,6 @@ class NodesList {
 
     //Removing socket from the list (the connection was terminated)
     async disconnectSocket(socket, connectionType){
-
 
         if (socket !== null && !socket.hasOwnProperty("node") ) {
 

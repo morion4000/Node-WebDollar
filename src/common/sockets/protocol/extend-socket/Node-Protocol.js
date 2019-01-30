@@ -23,11 +23,11 @@ class NodeProtocol {
     async justSendHello(){
 
         this.node.sendRequest("HelloNode", {
-                version: consts.SETTINGS.NODE.VERSION,
-                uuid: consts.SETTINGS.UUID,
-                nodeType: process.env.BROWSER ? NODE_TYPE.NODE_WEB_PEER : NODE_TYPE.NODE_TERMINAL,
-                domain: process.env.BROWSER ? "browser" : await NodeServer.getServerHTTPAddress(),
-                UTC: Blockchain.blockchain.timestamp.timeUTC,
+            version: consts.SETTINGS.NODE.VERSION,
+            uuid: consts.SETTINGS.UUID,
+            nodeType: process.env.BROWSER ? NODE_TYPE.NODE_WEB_PEER : NODE_TYPE.NODE_TERMINAL,
+            domain: process.env.BROWSER ? "browser" : await NodeServer.getServerHTTPAddress(),
+            UTC: Blockchain.blockchain.timestamp.timeUTC,
         });
 
     }
@@ -145,7 +145,7 @@ class NodeProtocol {
 
         let nodes = NodesList.getNodesByConnectionType(connectionType);
 
-        if (exceptSockets !== undefined && exceptSockets !== null && !Array.isArray(exceptSockets))
+        if ( exceptSockets && !Array.isArray(exceptSockets))
             exceptSockets = [exceptSockets];
 
         //console.log("request nodes.length", nodes.length, request, data, )
@@ -155,7 +155,7 @@ class NodeProtocol {
 
             let broadcast = false;
 
-            if (exceptSockets === undefined) broadcast = true;
+            if ( !exceptSockets ) broadcast = true;
             else
             if (Array.isArray(exceptSockets)){
 
@@ -163,10 +163,11 @@ class NodeProtocol {
 
                 let found = false;
                 for (let j=0; j<exceptSockets.length; j++)
-                    if (exceptSockets[j] !== null && nodes[i].socket.node.sckAddress.matchAddress(exceptSockets[j].node.sckAddress, ["uuid"] )) {
-                        found = true;
-                        break;
-                    }
+                    if(exceptSockets[j].node && exceptSockets[j].node.sckAddress )
+                        if (nodes[i].socket.node.sckAddress.matchAddress(exceptSockets[j].node.sckAddress, ["uuid"] )) {
+                            found = true;
+                            break;
+                        }
 
                 if (!found)
                     broadcast = true;
@@ -186,7 +187,7 @@ class NodeProtocol {
 
         this.node.sendRequest("head/new-block", {
             l: Blockchain.blockchain.blocks.length,
-            h: Blockchain.blockchain.blocks.last.hash,
+            h: Blockchain.blockchain.blocks.last.calculateNewChainHash(),
             s: Blockchain.blockchain.blocks.blocksStartingPoint,
             p: Blockchain.blockchain.agent.light ? ( Blockchain.blockchain.proofPi !== undefined && Blockchain.blockchain.proofPi.validatesLastBlock() ? true : false ) : true, // i also have the proof
             W: Blockchain.blockchain.blocks.chainWorkSerialized, // chain work

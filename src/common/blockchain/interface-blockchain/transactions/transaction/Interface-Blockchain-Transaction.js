@@ -124,8 +124,10 @@ class InterfaceBlockchainTransaction{
         if (pendingTransactionsWereIncluded)
             this.pendingTransactionsIncluded--;
 
-        if (this.pendingTransactionsIncluded !== undefined && this.pendingTransactionsIncluded > 0)
+        if ( this.pendingTransactionsIncluded && this.pendingTransactionsIncluded > 0)
             return;
+
+        this.blockchain.transactions.pendingQueue.removePendingTransaction(this, undefined, false);
 
         this.blockchain = undefined;
 
@@ -239,13 +241,13 @@ class InterfaceBlockchainTransaction{
 
     validateTransactionEveryTime( blockHeight , blockValidationType = {}){
 
-        if (this.blockchain === undefined) throw {message: "blockchain is empty"};
+        if ( !this.blockchain ) throw {message: "blockchain is empty"};
 
-        if (blockHeight === undefined) blockHeight = this.blockchain.blocks.length-1;
+        if ( !blockValidationType || !blockValidationType['skip-validation-transactions-from-values']){
 
-        if (this.timeLock !== 0 && blockHeight < this.timeLock) throw {message: "blockHeight < timeLock", timeLock: this.timeLock};
+            if ( !blockHeight ) blockHeight = this.blockchain.blocks.length-1;
 
-        if (blockValidationType === undefined || !blockValidationType['skip-validation-transactions-from-values']){
+            if (this.timeLock !== 0 && blockHeight < this.timeLock) throw {message: "blockHeight < timeLock", timeLock: this.timeLock};
 
             if (! this._validateNonce(blockValidationType) ) throw {message: "Nonce is invalid" };
 
@@ -256,23 +258,23 @@ class InterfaceBlockchainTransaction{
     }
 
 
-    isTransactionOK(avoidValidatingSignature = false, showDebug=true){
+    isTransactionOK(avoidValidatingSignature = false, showDebug=true, blockValidationType = {}){
 
         if (!avoidValidatingSignature)
             this.validateTransactionOnce(undefined,  { 'skip-validation-transactions-from-values': true } );
 
         try {
-            let blockValidationType = {
-                "take-transactions-list-in-consideration": {
-                    validation: true
-                }
+
+            blockValidationType["take-transactions-list-in-consideration"] = {
+                validation: true
             };
+
             this.validateTransactionEveryTime(undefined, blockValidationType );
 
         } catch (exception){
 
-            if (showDebug)
-                console.warn ("Transaction Problem", exception);
+            //if (showDebug)
+                // console.warn ("Transaction Problem", exception);
 
             return false;
         }
