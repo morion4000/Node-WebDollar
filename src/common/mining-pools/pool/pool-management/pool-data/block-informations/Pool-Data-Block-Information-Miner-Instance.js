@@ -95,16 +95,39 @@ class PoolDataBlockInformationMinerInstance {
         //POS difficulty
         if (BlockchainGenesis.isPoSActivated( height )){
 
-            let prevDifficulty = this._minerInstanceTotalDifficultiesPOS[height]||BigNumber(0);
+            //check if I already paid this address
+            let found = undefined;
 
-            if ( prevDifficulty.isLessThan( difficulty ) ){
+            for (let i=0; i < this.blockInformation.blockInformationMinersInstances.length; i++){
 
-                this.blockInformation.adjustBlockInformationDifficultyBestTarget( difficulty, prevDifficulty, height );
+                let blockInformationMinersInstance = this.blockInformation.blockInformationMinersInstances[i];
 
-                this.minerInstanceTotalDifficultyPOS = this.minerInstanceTotalDifficultyPOS.plus( difficulty.minus(prevDifficulty) );
-                this._minerInstanceTotalDifficultiesPOS[height] = difficulty;
+                if ( this.address.equals( blockInformationMinersInstance.address ) ){
+                    
+                    if (blockInformationMinersInstance === this) found = true;
+                    else found = false;
+
+                    break;
+                }
 
             }
+
+            //it is already another instance
+            if (found){
+
+                let prevDifficulty = this._minerInstanceTotalDifficultiesPOS[height]||BigNumber(0);
+
+                if ( prevDifficulty.isLessThan( difficulty ) ){
+
+                    this.blockInformation.adjustBlockInformationDifficultyBestTarget( difficulty, prevDifficulty, height, true );
+
+                    this.minerInstanceTotalDifficultyPOS = this.minerInstanceTotalDifficultyPOS.plus( difficulty.minus(prevDifficulty) );
+                    this._minerInstanceTotalDifficultiesPOS[height] = difficulty;
+
+                }
+
+            }
+
 
         } else { //POW difficulty
 
@@ -112,7 +135,7 @@ class PoolDataBlockInformationMinerInstance {
 
             if ( prevDifficulty.isLessThan(difficulty)) {
 
-                this.blockInformation.adjustBlockInformationDifficultyBestTarget( difficulty, prevDifficulty, height );
+                this.blockInformation.adjustBlockInformationDifficultyBestTarget( difficulty, prevDifficulty, height, true );
 
                 this.minerInstanceTotalDifficultyPOW = this.minerInstanceTotalDifficultyPOW.plus( difficulty.minus(prevDifficulty) );
                 this._minerInstanceTotalDifficultiesPOW[height] = difficulty;
@@ -136,13 +159,13 @@ class PoolDataBlockInformationMinerInstance {
     cancelDifficulties(){
 
         for (let height in this._minerInstanceTotalDifficultiesPOW)
-            this.blockInformation.adjustBlockInformationDifficultyBestTarget( BigNumber(0), this._minerInstanceTotalDifficultiesPOW[height], height );
+            this.blockInformation.adjustBlockInformationDifficultyBestTarget( BigNumber(0), this._minerInstanceTotalDifficultiesPOW[height], height, false );
         this._minerInstanceTotalDifficultiesPOW = {};
         this.minerInstanceTotalDifficultyPOW = BigNumber(0);
 
 
         for (let height in this._minerInstanceTotalDifficultiesPOS)
-            this.blockInformation.adjustBlockInformationDifficultyBestTarget( BigNumber(0), this._minerInstanceTotalDifficultiesPOS[height], height );
+            this.blockInformation.adjustBlockInformationDifficultyBestTarget( BigNumber(0), this._minerInstanceTotalDifficultiesPOS[height], height , false);
         this._minerInstanceTotalDifficultiesPOS = {};
         this.minerInstanceTotalDifficultyPOS = BigNumber(0);
 
@@ -201,7 +224,7 @@ class PoolDataBlockInformationMinerInstance {
         this.minerInstance.miner.rewardTotal -= this.reward;
         this.reward = 0;
 
-        if ( this.miner.referrals.referralLinkMiner !== undefined && this.poolManagement.poolSettings.poolReferralFee > 0)
+        if ( this.miner.referrals.referralLinkMiner && this.poolManagement.poolSettings.poolReferralFee > 0)
             this.miner.referrals.referralLinkMiner.rewardReferralTotal -= this._prevRewardInitial * ( this.poolManagement.poolSettings.poolReferralFee) ;
 
         this._prevRewardInitial = 0;
@@ -308,7 +331,7 @@ class PoolDataBlockInformationMinerInstance {
 
         this._workHash = newValue;
 
-        if (this.blockInformation.bestHash === undefined || newValue.compare(this.blockInformation.bestHash) <= 0)
+        if ( !this.blockInformation.bestHash || newValue.compare(this.blockInformation.bestHash) <= 0)
             this.blockInformation.bestHash = newValue;
 
     }

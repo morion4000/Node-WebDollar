@@ -122,7 +122,7 @@ class PoolWorkManagement{
 
             prevBlock = prevBlock  || blockInformationMinerInstance.workBlock;
 
-            if ( prevBlock === undefined)
+            if ( !prevBlock )
                 throw {message: "miner instance - no block"};
 
             let isPos = BlockchainGenesis.isPoSActivated(prevBlock.height);
@@ -157,7 +157,7 @@ class PoolWorkManagement{
                 prevBlock.verifyPOSSignature();
             }
 
-            if ( work.result  ) { //it is a solution and prevBlock is undefine
+            if ( work.result  ) { //it is a solution and prevBlock is undefined
 
                 if ( await blockInformationMinerInstance.wasBlockMined.apply( blockInformationMinerInstance, [prevBlock].concat( args )  ) ){
 
@@ -171,7 +171,7 @@ class PoolWorkManagement{
                     if ( !isPos && this.blockchain.blocks.length-1 > prevBlock.height )
                         throw {message: "pool: block is already too old"};
 
-                    if ( isPos&& this.blockchain.blocks.length-3 > prevBlock.height )
+                    if ( isPos && this.blockchain.blocks.length-3 > prevBlock.height )
                         throw {message: "pool: block is already too old"};
 
                     prevBlock.hash = work.hash;
@@ -183,6 +183,9 @@ class PoolWorkManagement{
                         prevBlock.posMinerAddress = work.pos.posMinerAddress;
                         prevBlock.posMinerPublicKey = work.pos.posMinerPublicKey;
                         prevBlock.timeStamp = work.pos.timestamp;
+
+                        prevBlock._validateBlockTimeStamp();
+
                     }
 
                     let revertActions = new RevertActions(this.blockchain);
@@ -214,7 +217,7 @@ class PoolWorkManagement{
 
 
                         try {
-                            blockInformation.block = prevBlock;
+                            blockInformation.block = block;
                         } catch (exception){
                             console.error("blockInformation block", exception);
                         }
@@ -266,11 +269,11 @@ class PoolWorkManagement{
 
             if (storeDifficulty) {
 
-                let difficulty = blockInformationMinerInstance.calculateDifficulty(prevBlock, workDone);
-                blockInformationMinerInstance.adjustDifficulty(prevBlock, difficulty, true);
+                let difficulty = blockInformationMinerInstance.calculateDifficulty( prevBlock, workDone );
+                blockInformationMinerInstance.adjustDifficulty( prevBlock, difficulty, true );
 
                 //statistics
-                this.poolManagement.poolStatistics.addStatistics(difficulty, minerInstance);
+                this.poolManagement.poolStatistics.addStatistics( difficulty, minerInstance );
 
             }
 
@@ -280,7 +283,7 @@ class PoolWorkManagement{
 
             if (exception.message === "block was incorrectly mined" && Math.random() < 0.3 )
                 console.error("Pool Work Management raised an error", exception);
-            else if (consts.DEBUG)
+            else if (Math.random() < 0.05 )
                 console.error("error pool mining", exception)
 
         }
