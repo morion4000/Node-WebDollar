@@ -68,7 +68,8 @@ class NodeServer {
 
         this.nodeServer = null;
 
-        await NodeExpress.startExpress();
+        let expressOpened = await NodeExpress.startExpress();
+        if (!expressOpened) return false;
 
         if (!consts.OPEN_SERVER) return false;
 
@@ -213,7 +214,8 @@ class NodeServer {
 
                     SocketExtend.extendSocket(socket, sckAddress, undefined, undefined, 1);
 
-                    console.warn('New connection from ' + socket.node.sckAddress.getAddress(true) + " "+ (nodeType === NODE_TYPE.NODE_WEB_PEER ? "browser" : "terminal") );
+                    if (Math.random() < 0.3)
+                        console.warn('New connection from ' + socket.node.sckAddress.getAddress(true) + " "+ (nodeType === NODE_TYPE.NODE_WEB_PEER ? "browser" : "terminal") );
 
                     if (nodeType === NODE_TYPE.NODE_TERMINAL ) this._rooms.terminals.serverSits--;
                     else if (nodeType === NODE_TYPE.NODE_WEB_PEER ) this._rooms.browsers.serverSits--;
@@ -333,7 +335,7 @@ class NodeServer {
 
                         setTimeout(() => {
 
-                            if (NodesList.nodes[i] !== undefined)
+                            if ( NodesList.nodes[i] )
                                 NodesList.nodes[i].socket.disconnect();
 
                         }, 3000);

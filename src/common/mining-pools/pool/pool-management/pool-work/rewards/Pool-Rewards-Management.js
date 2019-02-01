@@ -178,7 +178,7 @@ class PoolRewardsManagement{
             if ( this.poolData.blocksInfo[i].payout){
 
                 //let's delete old payouts
-                if ( this.poolData.blocksInfo[i].block === undefined || (this.blockchain.blocks.length - this.poolData.blocksInfo[i].block.height > 40)) {
+                if ( !this.poolData.blocksInfo[i].block || (this.blockchain.blocks.length - this.poolData.blocksInfo[i].block.height > 40)) {
 
                     this.poolManagement.poolStatistics.poolBlocksConfirmedAndPaid++;
                     this.poolManagement.poolStatistics.poolBlocksConfirmed--;
@@ -436,39 +436,49 @@ class PoolRewardsManagement{
 
     }
 
-    redistributePoolDataBlockInformation(blockInformation, index){
+    //if wokType === "undefined", workType is both PoW and PoS
 
-        blockInformation.block = undefined; //cancel the block
+    redistributePoolDataBlockInformation(blockInformation, index, workType){
+
+        if (!workType)
+            blockInformation.block = undefined; //cancel the block
 
         //move the blockInformationMinerInstances to the latest non solved blockInformation
         let newBlockInformation = this.poolData.lastBlockInformation;
 
-        if (newBlockInformation.block !== undefined)
+        if ( !newBlockInformation || newBlockInformation.block || newBlockInformation === blockInformation )
             newBlockInformation = this.poolData.addBlockInformation();
 
         blockInformation.blockInformationMinersInstances.forEach( (blockInformationMinersInstance)=>{
 
-            if ( blockInformationMinersInstance.minerInstanceTotalDifficultyPOW.isLessThanOrEqualTo(0) && blockInformationMinersInstance.minerInstanceTotalDifficultyPOS.isLessThanOrEqualTo(0) )
-                return;
+            let nothing = true;
+
+            if ( (!workType || workType === "pow") && blockInformationMinersInstance.minerInstanceTotalDifficultyPOW.isGreaterThan(0)  ) nothing = false;
+            if ( (!workType || workType === "pos") && blockInformationMinersInstance.minerInstanceTotalDifficultyPOS.isGreaterThan(0)  ) nothing = false;
+
+            if (nothing) return;
 
             let newBlockInformationMinerInstance = newBlockInformation._addBlockInformationMinerInstance( blockInformationMinersInstance.minerInstance );
 
             blockInformationMinersInstance.cancelReward();
 
-            for (let height in blockInformationMinersInstance._minerInstanceTotalDifficultiesPOW)
-                newBlockInformationMinerInstance.adjustDifficulty( {height: height}, blockInformationMinersInstance._minerInstanceTotalDifficultiesPOW[height], true);
+            if (!workType || workType === "pow")
+                for (let height in blockInformationMinersInstance._minerInstanceTotalDifficultiesPOW)
+                    newBlockInformationMinerInstance.adjustDifficulty( {height: height}, blockInformationMinersInstance._minerInstanceTotalDifficultiesPOW[height], true );
 
-            for (let height in blockInformationMinersInstance._minerInstanceTotalDifficultiesPOS)
-                newBlockInformationMinerInstance.adjustDifficulty( {height: height}, blockInformationMinersInstance._minerInstanceTotalDifficultiesPOS[height], true);
+            if (!workType || workType === "pos")
+                for (let height in blockInformationMinersInstance._minerInstanceTotalDifficultiesPOS)
+                    newBlockInformationMinerInstance.adjustDifficulty( {height: height}, blockInformationMinersInstance._minerInstanceTotalDifficultiesPOS[height], true );
 
-            blockInformationMinersInstance.cancelDifficulties();
+            blockInformationMinersInstance.cancelDifficulties( workType );
+
+            blockInformationMinersInstance.calculateReward(false );
 
         });
 
-
-
         //clear the blockInformation
-        this.poolData.deleteBlockInformation(index);
+        if (!workType)
+            this.poolData.deleteBlockInformation(index);
 
     }
 

@@ -193,6 +193,9 @@ class InterfaceBlockchainTransactionsProtocol {
 
                 for (let i=0; i<response.ids.length; i++ ){
 
+                    if(response.ids[i].length !== consts.BLOCKCHAIN.BLOCKS_POW_LENGTH)
+                        continue;
+
                     transaction = this.blockchain.transactions.pendingQueue.findPendingTransaction(response.ids[i]);
 
                     if ( !transaction ) {
@@ -284,7 +287,7 @@ class InterfaceBlockchainTransactionsProtocol {
 
     propagateNewPendingTransaction(transaction, exceptSockets = []){
 
-        if (!Array.isArray(exceptSockets) )11
+        if (!Array.isArray(exceptSockets) )
             exceptSockets = [exceptSockets];
 
         if (Blockchain.PoolManagement.poolStarted)

@@ -3,6 +3,7 @@ import TransactionsProtocol from "../protocol/Transactions-Protocol"
 import TransactionsPendingQueueSavingManager from "./Transactions-Pending-Queue-Saving-Manager";
 import Blockchain from "../../../../../main-blockchain/Blockchain";
 import StatusEvents from "common/events/Status-Events";
+import NodesList from 'node/lists/Nodes-List'
 
 class TransactionsPendingQueue {
 
@@ -19,8 +20,9 @@ class TransactionsPendingQueue {
 
         this.db = db;
 
-        StatusEvents.on("blockchain/block-inserted", async (data)=>{
-            this._removeOldTransactions();
+        StatusEvents.on("blockchain/blocks-count-changed", async (data)=>{
+            if ( NodesList.isConsensus(this.blockchain.blocks.length))
+                this._removeOldTransactions();
         });
 
     }

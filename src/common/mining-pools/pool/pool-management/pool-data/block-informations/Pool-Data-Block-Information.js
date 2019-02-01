@@ -89,9 +89,9 @@ class PoolDataBlockInformation {
 
         }
 
-        if (!add && miningHeightDifficulty.minus(difference).isLessThanOrEqualTo(0)  && this.miningHeights[height] ){
+        if (!add && miningHeightDifficulty.plus(difference).isLessThanOrEqualTo(0)  && this.miningHeights[height] ){
 
-            this.miningHeights[height] = miningHeightDifficulty.minus( difference );
+            this.miningHeights[height] = miningHeightDifficulty.plus( difference );
 
             if (this.miningHeights[height].isEqualTo(0)){
 
@@ -202,6 +202,7 @@ class PoolDataBlockInformation {
         this.totalDifficultyPOW = new BigNumber(0);
         this.totalDifficultyPOS = new BigNumber(0);
 
+        console.info("Blocks Miner Instances", length);
         for (let i=0; i<length; i++){
 
             let blockInformationMinerInstance = new PoolDataBlockInformationMinerInstance(this.poolManagement, this, undefined);
@@ -209,7 +210,8 @@ class PoolDataBlockInformation {
 
             if ( !blockInformationMinerInstance.minerInstance ) continue;
 
-            this.blockInformationMinersInstances.push(blockInformationMinerInstance);
+            if (blockInformationMinerInstance.minerInstanceTotalDifficultyPOS.isGreaterThan(0) || blockInformationMinerInstance.minerInstanceTotalDifficultyPOW.isGreaterThan(0))
+                this.blockInformationMinersInstances.push(blockInformationMinerInstance);
 
         }
         this._calculateTimeRemaining();
@@ -265,10 +267,10 @@ class PoolDataBlockInformation {
 
     _addBlockInformationMinerInstance(minerInstance){
 
-        if (minerInstance === undefined) throw {message: "minerInstance is undefined"};
+        if (!minerInstance ) throw {message: "minerInstance is undefined"};
 
         let blockInformationMinerInstance = this._findBlockInformationMinerInstance(minerInstance);
-        if (blockInformationMinerInstance !== null) return blockInformationMinerInstance;
+        if (blockInformationMinerInstance ) return blockInformationMinerInstance;
 
 
         blockInformationMinerInstance = new PoolDataBlockInformationMinerInstance(this.poolManagement, this, minerInstance, undefined, );

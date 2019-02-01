@@ -38,13 +38,15 @@ class NodesList {
         let blocksList={};
         let consensusHeightNodes=0;
 
-        if(typeof this.nodes !== "undefined")
-            for(let i=0;i<this.nodes.length;i++)
-                if(typeof this.nodes[i].socket.node.protocol.blocks !== "undefined" && this.nodes[i].socket.node.protocol.blocks !== 0)
-                    if(typeof blocksList[this.nodes[i].socket.node.protocol.blocks] === "undefined")
-                        blocksList[this.nodes[i].socket.node.protocol.blocks]=1;
+        if( this.nodes.length > 0 ) {
+            for (let i = 0; i < this.nodes.length; i++)
+                if (this.nodes[i].socket.node.protocol.blocks && this.nodes[i].socket.node.protocol.blocks > 0)
+                    if ( !blocksList[this.nodes[i].socket.node.protocol.blocks] )
+                        blocksList[this.nodes[i].socket.node.protocol.blocks] = 1;
                     else
                         blocksList[this.nodes[i].socket.node.protocol.blocks]++;
+        } else
+            return false;
 
         for(let key in blocksList)
             if(blocksList[key] > consensusHeightNodes && parseInt(key) >= parseInt(this.consensusBlock)){
@@ -292,7 +294,7 @@ class NodesList {
 
         for (let i=this.nodes.length-1; i>=0; i--)
             if (this.nodes[i].isFallback)
-                this.nodes.splice(i,1);
+                this.nodes.disconnect();
 
     }
 

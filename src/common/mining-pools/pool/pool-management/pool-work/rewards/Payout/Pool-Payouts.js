@@ -1,4 +1,3 @@
-import Blockchain from "main-blockchain/Blockchain";
 import Log from 'common/utils/logging/Log';
 
 const BigNumber = require ('bignumber.js');
@@ -8,8 +7,10 @@ import consts from 'consts/const_global'
 import BlockchainMiningReward from 'common/blockchain/global/Blockchain-Mining-Reward';
 
 import WebDollarCoins from "common/utils/coins/WebDollar-Coins"
+import BlockchainGenesis from 'common/blockchain/global/Blockchain-Genesis';
+import Blockchain from "main-blockchain/Blockchain";
 
-const PAYOUT_INTERVAL = consts.DEBUG ? 5 : 40 + Math.floor( Math.random()*10 ); //in blocks;
+const PAYOUT_INTERVAL = consts.DEBUG ? 6 : 30; //in blocks;
 const PAYOUT_FEE = WebDollarCoins.WEBD * 0;
 
 
@@ -64,6 +65,11 @@ class PoolPayouts{
 
         if (!Blockchain.synchronized) return;
 
+        let paymentType = "pos";
+        if ( this.blockchain.blocks.length % (2*PAYOUT_INTERVAL) === 0) paymentType = "pow";
+
+        Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
+        Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
         Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
         Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
         Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
@@ -73,11 +79,15 @@ class PoolPayouts{
         Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
         Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
         Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
+        Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
+        Log.info("--------------------------------------------------", Log.LOG_TYPE.POOLS);
 
         let blocksConfirmed = [];
         for (let i=0; i<this.poolData.blocksInfo.length-1; i++)
-            if (this.poolData.blocksInfo[i].confirmed && !this.poolData.blocksInfo[i].payout)
-                blocksConfirmed.push(this.poolData.blocksInfo[i]);
+            if (this.poolData.blocksInfo[i].confirmed && !this.poolData.blocksInfo[i].payout )
+                if(this.poolData.blocksInfo[i].block)
+                    if ( (BlockchainGenesis.isPoSActivated( this.poolData.blocksInfo[i].block.height ) && paymentType === "pos") ||  ( !BlockchainGenesis.isPoSActivated( this.poolData.blocksInfo[i].block.height ) && paymentType === "pow" ) )
+                        blocksConfirmed.push(this.poolData.blocksInfo[i]);
 
         console.info("Payout: Blocks confirmed: ", blocksConfirmed.length);
 
@@ -101,7 +111,7 @@ class PoolPayouts{
 
             let totalSumReward = 0;
             for (let i=0; i<blocksConfirmed.length; i++)
-                totalSumReward += BlockchainMiningReward.getReward ( blocksConfirmed[i].block.height ) * (1 - this.poolManagement.poolSettings.poolFee);
+                    totalSumReward += BlockchainMiningReward.getReward(blocksConfirmed[i].block.height) * (1 - this.poolManagement.poolSettings.poolFee);
 
             let poolFork = totalSumReward - Blockchain.blockchain.accountantTree.getBalance( this.blockchain.mining.minerAddress );
 
@@ -115,23 +125,30 @@ class PoolPayouts{
 
                 let totalDifficultyPOW = new BigNumber(0), totalDifficultyPOS = new BigNumber(0);
 
+                this.poolManagement.poolRewardsManagement.redistributePoolDataBlockInformation( blockConfirmed, blockConfirmed, paymentType === "pow" ? "pos" : "pow");
+
                 blockConfirmed.blockInformationMinersInstances.forEach((blockInformationMinerInstance)=>{
                     totalDifficultyPOW = totalDifficultyPOW.plus(blockInformationMinerInstance.minerInstanceTotalDifficultyPOW);
                     totalDifficultyPOS = totalDifficultyPOS.plus(blockInformationMinerInstance.minerInstanceTotalDifficultyPOS);
                 });
 
                 if ( !totalDifficultyPOW.isEqualTo(blockConfirmed.totalDifficultyPOW)  )
-                    throw { message: "Total POW Difficulty doesn't match", totalDifficultyPOW: totalDifficultyPOW,  blockConfirmedDifficulty: blockConfirmed.totalDifficultyPOW };
+                    console.error( "Total POW Difficulty doesn't match", {totalDifficultyPOW: totalDifficultyPOW,  blockConfirmedDifficulty: blockConfirmed.totalDifficultyPOW });
 
                 if ( !totalDifficultyPOS.isEqualTo(blockConfirmed.totalDifficultyPOS) )
-                    throw { message: "Total POS Difficulty doesn't match", totalDifficultyPOS: totalDifficultyPOS, blockConfirmedDifficulty: blockConfirmed.totalDifficultyPOS };
+                    console.error(  "Total POS Difficulty doesn't match", { totalDifficultyPOS: totalDifficultyPOS, blockConfirmedDifficulty: blockConfirmed.totalDifficultyPOS });
 
-                if ( totalDifficultyPOS.isLessThanOrEqualTo(0) && totalDifficultyPOW.isLessThanOrEqualTo(0) ) {
+                if ( totalDifficultyPOS.isLessThanOrEqualTo(0) && totalDifficultyPOW.isLessThanOrEqualTo(0  ) ) {
 
                     if ( consts.MINING_POOL.SKIP_POS_REWARDS || consts.MINING_POOL.SKIP_POW_REWARDS)
                         return;
 
-                    throw { message: "Total PS and POW are both zero", totalDifficultyPOS: totalDifficultyPOS,  totalDifficultyPOW: totalDifficultyPOW };
+                    console.info("--------------------------");
+                    console.info("TOTAL POS AND POW ARE BOTH ZERO", {totalDifficultyPOS: totalDifficultyPOS,  totalDifficultyPOW: totalDifficultyPOW});
+                    console.info("--------------------------");
+
+                    blockConfirmed.payout = true;
+                    return;
 
                 }
 

@@ -16,6 +16,8 @@ class InterfaceBlockchainProtocolForkSolver{
         this.blockchain = blockchain;
         this.protocol = protocol;
 
+        this.curentIterationsDownloaded = 0;
+
     }
 
     async _discoverForkBinarySearch(socket, initialLeft, left, right){
@@ -28,16 +30,16 @@ class InterfaceBlockchainProtocolForkSolver{
 
             answer = await socket.node.sendRequestWaitOnce("head/chainHash", mid, mid, consts.SETTINGS.PARAMS.CONNECTIONS.TIMEOUT.WAIT_ASYNC_DISCOVERY_TIMEOUT);
 
-            console.log("_discoverForkBinarySearch", initialLeft, "left", left, "right ", right);
+            console.log("_discoverForkBinarySearch", initialLeft, "left", left, "right ", right, (answer && answer.hash) ? answer.hash.toString("hex") : 'no remote hash', "my chain hash", this.blockchain.getChainHash( mid + 1 ).toString("hex" ) );
 
-            if (left < 0 || answer === null  || !Buffer.isBuffer(answer.hash) ) // timeout
+            if (left < 0 || !answer || !Buffer.isBuffer(answer.hash) ) // timeout
                 return {position: null, header: answer };
 
             //i have finished the binary search
             if (left >= right) {
 
                 //it the block actually is the same
-                if (answer.hash.equals( this.blockchain.getChainHash( mid + 1 ) ) )
+                if (answer.hash.equals( this.blockchain.getChainHash( mid + 2 ) ) )
                     return {position: mid, header: answer.hash };
                 else {
 
@@ -46,10 +48,10 @@ class InterfaceBlockchainProtocolForkSolver{
 
                         answer = await socket.node.sendRequestWaitOnce("head/chainHash", mid-1, mid-1, consts.SETTINGS.PARAMS.CONNECTIONS.TIMEOUT.WAIT_ASYNC_DISCOVERY_TIMEOUT );
 
-                        if (answer === null || !Buffer.isBuffer(answer.hash))
+                        if ( !answer || !Buffer.isBuffer(answer.hash))
                             return {position: null, header: answer }; // timeout
 
-                        if (answer.hash.equals( this.blockchain.getChainHash(mid -1 + 1 ) ) ) // it is a match
+                        if (answer.hash.equals( this.blockchain.getChainHash(mid -1 + 2 ) ) ) // it is a match
                             return {position: mid-1, header: answer.hash };
 
                     }
@@ -59,8 +61,10 @@ class InterfaceBlockchainProtocolForkSolver{
 
             }
 
+            console.log("it is comparing", answer.hash.toString("hex"), this.blockchain.getChainHash(mid + 1).toString("hex"));
+
             //was not not found, search left because it must be there
-            if (! answer.hash.equals( this.blockchain.getChainHash(mid + 1)  ) )
+            if (! answer.hash.equals( this.blockchain.getChainHash(mid + 2)  ) )
                 return await this._discoverForkBinarySearch(socket, initialLeft, left, mid);
             else
             //was found, search right because the fork must be there
@@ -119,11 +123,11 @@ class InterfaceBlockchainProtocolForkSolver{
             if ( currentBlockchainLength >= count && ( forkChainLength >= currentBlockchainLength ||  (this.blockchain.agent.light && forkProof) )  )
                 for (let i = currentBlockchainLength-1; i >= currentBlockchainLength-1-count; i--){
 
-                    if (i === forkChainLength-1 && forkLastChainHash !== undefined && forkLastChainHash !== undefined) {
+                    if (i === forkChainLength-1 && forkLastChainHash && forkLastChainHash ) {
                         answer = { hash: forkLastChainHash };
                     } else {
                         answer = await socket.node.sendRequestWaitOnce( "head/chainHash", i, i, consts.SETTINGS.PARAMS.CONNECTIONS.TIMEOUT.WAIT_ASYNC_DISCOVERY_TIMEOUT );
-                        if (answer === null || answer === undefined || answer.hash === undefined)
+                        if (!answer || !answer.hash )
                             continue;
                     }
 
@@ -200,7 +204,7 @@ class InterfaceBlockchainProtocolForkSolver{
             //its a fork... starting from position
             console.log("fork position", binarySearchResult.position, "forkChainStartingPoint", forkChainStartingPoint, "forkChainLength", forkChainLength);
 
-            if (binarySearchResult.position === -1 || (binarySearchResult.position > 0 && binarySearchResult.header !== undefined && binarySearchResult.header !== null) ){
+            if (binarySearchResult.position === -1 || (binarySearchResult.position > 0 && binarySearchResult.header  )) {
 
                 if (binarySearchResult.position === -1)
                     binarySearchResult.position = 0;
@@ -224,8 +228,10 @@ class InterfaceBlockchainProtocolForkSolver{
                 if ( fork.forkStartingHeight > fork.forkChainLength-1 )
                     throw {message: "FORK is empty"};
 
+                console.info("immutability ");
                 fork.validateForkImmutability();
 
+                console.info("initialize fork");
                 await fork.initializeFork(); //download the requirements and make it ready
 
                 if (!fork.forkReady)
@@ -281,7 +287,7 @@ class InterfaceBlockchainProtocolForkSolver{
 
         StatusEvents.emit( "agent/status", {message: "Collecting Blockchain", blockHeight: fork.forkStartingHeight } );
 
-        if (fork === null || fork === undefined || typeof fork !== "object" )
+        if ( !fork || typeof fork !== "object" )
             throw {message: 'fork is null'};
 
         let nextBlockHeight = fork.forkStartingHeightDownloading;
@@ -292,7 +298,16 @@ class InterfaceBlockchainProtocolForkSolver{
 
         console.log(" < fork.forkChainLength", fork.forkChainLength, "fork.forkBlocks.length", fork.forkBlocks.length);
 
+        let totalIterations = 0;
+
         while (( fork.forkStartingHeight + fork.forkBlocks.length < fork.forkChainLength) && !global.TERMINATED  ) {
+
+            totalIterations++;
+
+            if(totalIterations >= 1000){
+                console.error("MAX iterations on downloading block")
+                break;
+            }
 
             //let socketListOptimized = fork.sockets.sort((a,b) => {return (a.latency > b.latency) ? 1 : ((b.latency > a.latency ) ? -1 : 0);} );
 
@@ -319,14 +334,20 @@ class InterfaceBlockchainProtocolForkSolver{
 
                 let downloadingBlock = async (index)=>{
 
-                    if ( (trialsList[index] > 5 || global.TERMINATED) && !resolved ) {
-                        resolved = true;
-                        resolve(false);
+                    this.curentIterationsDownloaded++;
+
+                    if ( trialsList[index] > 5 || global.TERMINATED) {
+
+                        if (!resolved) {
+                            resolved = true;
+                            resolve(false);
+                        }
+
                         return;
                     }
 
                     socketIndex++;
-                    if (! trialsList[index] ) trialsList[index] = 0
+                    if ( trialsList[index] === undefined ) trialsList[index] = 0;
                     trialsList[index] ++ ;
 
                     let socket = fork.getForkSocket(socketIndex);
@@ -348,7 +369,7 @@ class InterfaceBlockchainProtocolForkSolver{
 
                     answer.then( (result)=>{
 
-                        if (result === undefined || result === null) {
+                        if ( !result ) {
 
                             downloadingList[index] = undefined;
                             socket.latency += Math.random()*1500;
@@ -389,6 +410,13 @@ class InterfaceBlockchainProtocolForkSolver{
 
             });
 
+            if(this.curentIterationsDownloaded >= 1000){
+
+                console.error("MAX iterations on downloading block")
+                this.curentIterationsDownloaded = 0;
+
+            }
+
             try {
                 await finished;
             } catch (exception){
@@ -404,10 +432,10 @@ class InterfaceBlockchainProtocolForkSolver{
 
             for(let i=0; i<downloadingList.length; i++){
 
-                if (downloadingList[i] === null || downloadingList[i] === undefined)
+                if ( !downloadingList[i])
                     throw {message: "block never received "+ nextBlockHeight};
 
-                if ( !downloadingList[i].result || downloadingList[i].block === undefined  || !Buffer.isBuffer(downloadingList[i].block) ) {
+                if ( !downloadingList[i].result || !downloadingList[i].block || !Buffer.isBuffer(downloadingList[i].block) ) {
                     console.error("Fork Answer received ", downloadingList[i]);
                     throw {message: "Fork Answer is not Buffer"};
                 }
@@ -418,7 +446,7 @@ class InterfaceBlockchainProtocolForkSolver{
                 if (fork.downloadBlocksSleep && nextBlockHeight % 10 === 0)
                     await this.blockchain.sleep(15);
 
-                if (this.blockchain.blocks[block.height] !== undefined && block.calculateNewChainHash().equals(this.blockchain.blocks[block.height].calculateNewChainHash() ) )
+                if (this.blockchain.blocks[block.height] && block.calculateNewChainHash().equals(this.blockchain.blocks[block.height].calculateNewChainHash() ) )
                     throw {message: "You gave me a block which I already have have the same block"};
 
                 let result;

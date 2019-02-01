@@ -135,17 +135,14 @@ class InterfaceBlockchainFork {
                         }
 
                     if (!found)
-                        addresses.push(this.blockchain.blocks[i].data.minerAddress)
+                        addresses.push(this.blockchain.blocks[i].data.minerAddress);
+
+                    if (!consts.DEBUG && addresses.length >= 1)  //in my fork, there were also other miners, and not just me
+                        throw {message: "Validate for Immutability failed"};
+                    else
+                        return true; //there were just 3 miners, probably it is my own fork...
 
                 }
-
-                if(consts.DEBUG) return true;
-
-                if (addresses.length >= 1)  //in my fork, there were also other miners, and not just me
-                    throw {message: "Validate for Immutability failed"};
-                else
-                    return true; //there were just 3 miners, probably it is my own fork...
-
 
             }
 
@@ -318,7 +315,7 @@ class InterfaceBlockchainFork {
         //verify if now, I have some blocks already in my the blockchain that are similar with the fork
         let pos = -1;
         for (let i=0; i<this.forkBlocks.length-1; i++)
-            if ( this.blockchain.blocks[ this.forkBlocks[i].height ] !== undefined && this.blockchain.blocks[ this.forkBlocks[i].height ].hash.equals(this.forkBlocks[i].hash)  ){
+            if ( this.blockchain.blocks[ this.forkBlocks[i].height ] && this.blockchain.blocks[ this.forkBlocks[i].height ].calculateNewChainHash().equals(this.forkBlocks[i].calculateNewChainHash() )  ){
 
                 pos = i;
 
@@ -784,7 +781,7 @@ class InterfaceBlockchainFork {
 
     pushHeader(hash){
 
-        if (hash === undefined || hash === null) return;
+        if ( !hash ) return;
 
         for (let i=0; i<this.forkHeaders.length; i++)
             if (this.forkHeaders[i].equals( hash ) )
