@@ -60,15 +60,11 @@ class InterfaceBlockchain extends InterfaceBlockchainBasic{
      * @param socketsAvoidBroadcast
      * @returns {Promise.<boolean>}
      */
-    async includeBlockchainBlock(block, resetMining, socketsAvoidBroadcast, saveBlock, revertActions, showUpdate){
+    async includeBlockchainBlock(block, resetMining, socketsAvoidBroadcast, saveBlock = true, revertActions, showUpdate){
 
-        if (block.reward === undefined)
-            block.reward = BlockchainMiningReward.getReward(block.height);
+        if (!block.reward ) block.reward = BlockchainMiningReward.getReward(block.height);
 
-        if (saveBlock === undefined)
-            saveBlock = true;
-
-        if (block.blockValidation === undefined)
+        if (!block.blockValidation )
             block.blockValidation = this.createBlockValidation();
         else {
 
@@ -116,7 +112,7 @@ class InterfaceBlockchain extends InterfaceBlockchainBasic{
 
         if (!block.blockValidation.blockValidationType['skip-sleep']) await this.sleep(2);
 
-        if (resetMining && this.mining !== undefined  && this.mining !== null) //reset mining
+        if (resetMining && this.mining ) //reset mining
             this.mining.resetMining();
 
         return true;
@@ -304,6 +300,7 @@ class InterfaceBlockchain extends InterfaceBlockchainBasic{
                 validationType["skip-mini-blockchain-simulation"] = true;
                 validationType["skip-validation-transactions-from-values"] = true;
                 validationType["skip-validation-timestamp"] = true;
+                validationType["skip-validation-timestamp-network-adjusted-time"] = true;
                 validationType["skip-block-data-validation"] = true;
                 validationType["skip-block-data-transactions-validation"] = true;
                 validationType["skip-validation-interlinks"] = true;
@@ -311,7 +308,7 @@ class InterfaceBlockchain extends InterfaceBlockchainBasic{
                 validationType["skip-interlinks-update"] = true;
                 validationType["skip-target-difficulty-validation"] = true;
                 validationType["skip-calculating-proofs"] = true;
-                //validationType["skip-calculating-block-nipopow-level"] = true;
+                validationType["skip-calculating-block-nipopow-level"] = true;
                 validationType["skip-saving-light-accountant-tree-serializations"] = true;
                 validationType["skip-recalculating-hash-rate"] = true;
 

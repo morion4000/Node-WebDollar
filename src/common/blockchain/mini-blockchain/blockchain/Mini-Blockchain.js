@@ -41,15 +41,14 @@ class MiniBlockchain extends  inheritBlockchain{
 
         try{
 
-            let date = new Date().getTime();
+
             if (block.blockValidation.blockValidationType['skip-mini-blockchain-simulation'] !== true) {
 
                 //updating reward
                 let result = this.accountantTree.updateAccount( block.data.minerAddress, block.reward, undefined, revertActions, showUpdate);
 
                 //reward
-                if (result === null || result === undefined)
-                    throw {message: "reward couldn't be set to the minerAddress"};
+                if ( !result ) throw {message: "reward couldn't be set to the minerAddress"};
 
                 if (await block.data.transactions.validateTransactions(block.height, block.blockValidation.blockValidationType) === false)
                     throw {message: "Validate Transactions is wrong"};
@@ -117,15 +116,17 @@ class MiniBlockchain extends  inheritBlockchain{
      * @param socketsAvoidBroadcast
      * @returns {Promise.<*>}
      */
-    async includeBlockchainBlock( block, resetMining, socketsAvoidBroadcast, saveBlock, revertActions, showUpdate ){
+    async includeBlockchainBlock( ...args ){
 
-        if (await this.simulateNewBlock(block, false, revertActions,
+        let myArgs = args;
+
+        if (await this.simulateNewBlock( args[0], false, args[4],
 
                 async ()=>{
-                    return await inheritBlockchain.prototype.includeBlockchainBlock.call( this, block, resetMining, socketsAvoidBroadcast, saveBlock, revertActions );
+                    return await inheritBlockchain.prototype.includeBlockchainBlock.apply( this, myArgs );
                 }
 
-            , showUpdate )===false) throw {message: "Error includeBlockchainBlock MiniBlockchain "};
+            , args[5] )===false) throw {message: "Error includeBlockchainBlock MiniBlockchain "};
 
         return true;
     }

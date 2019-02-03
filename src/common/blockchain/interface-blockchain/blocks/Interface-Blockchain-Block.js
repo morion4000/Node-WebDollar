@@ -184,7 +184,7 @@ class InterfaceBlockchainBlock {
             if (this.height >= consts.BLOCKCHAIN.HARD_FORKS.POS_ACTIVATION){
 
                 let prevBlockChainNew = this.blockValidation.getBlockCallBack(this.height).calculateNewChainHash();
-                if ( prevBlockChainNew === null || !Buffer.isBuffer(prevBlockChainNew))
+                if ( !prevBlockChainNew || !Buffer.isBuffer(prevBlockChainNew))
                     throw {message: 'previous chain hash is not given'};
 
                 if (! BufferExtended.safeCompare(prevBlockChainNew, this.hashChain))
@@ -245,8 +245,8 @@ class InterfaceBlockchainBlock {
         if ( ! this.blockValidation.blockValidationType['skip-validation-timestamp'] && this.height > consts.BLOCKCHAIN.TIMESTAMP.VALIDATION_NO_BLOCKS + 1 )
             this.blockchain.blocks.timestampBlocks.validateMedianTimestamp(this.timeStamp, this.height, this.blockValidation);
 
-
-        this.blockchain.blocks.timestampBlocks.validateNetworkAdjustedTime(this.timeStamp, this.height);
+        if (!this.blockValidation.blockValidationType["skip-validation-timestamp-network-adjusted-time"])
+            this.blockchain.blocks.timestampBlocks.validateNetworkAdjustedTime(this.timeStamp, this.height);
 
     }
 
@@ -388,11 +388,11 @@ class InterfaceBlockchainBlock {
         if (!Buffer.isBuffer(buffer) && typeof buffer === "string")
             buffer = new Buffer(buffer, "hex");
 
-        if (height !== undefined)  this.height = height;
-        if (reward !== undefined) this.reward = reward;
-        else if (this.reward === undefined) this.reward = BlockchainMiningReward.getReward(height||this.height);
+        if ( height !== undefined )  this.height = height||0;
+        if (reward ) this.reward = reward;
+        else this.reward = BlockchainMiningReward.getReward(this.height);
 
-        if (difficultyTargetPrev !== undefined) this._difficultyTargetPrev = difficultyTargetPrev;
+        if (difficultyTargetPrev ) this._difficultyTargetPrev = difficultyTargetPrev;
 
         if ( blockLengthValidation && (buffer.length - offset) > consts.SETTINGS.PARAMS.MAX_SIZE.BLOCKS_MAX_SIZE_BYTES )
             throw {message: "Block Size is bigger than the MAX_SIZE.BLOCKS_MAX_SIZE_BYTES", bufferLength: buffer.length };
@@ -458,9 +458,19 @@ class InterfaceBlockchainBlock {
 
         try{
 
-            let buffer = await this.db.get(key, 12000);
+            let buffer;
 
-            if (buffer === null) {
+            let trials = 0;
+            while (trials < 50){
+
+                trials ++;
+                buffer = await this.db.get(key, 7000);
+
+                if ( buffer )
+                    break;
+            }
+
+            if ( !buffer ) {
                 console.error("block "+this.height+" was not found "+ key);
                 return false;
             }

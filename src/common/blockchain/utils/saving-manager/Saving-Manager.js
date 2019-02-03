@@ -23,12 +23,12 @@ class SavingManager{
 
         if (process.env.BROWSER) return;
 
-        if (block === undefined || block === null) return false;
+        if ( !block ) return false;
 
-        if (height === undefined)
+        if ( !height )
             height = block.height;
 
-        if (this._pendingBlocksList[height] === undefined) {
+        if ( !this._pendingBlocksList[height] ) {
 
             this._pendingBlocksList[height] = [{
                 saving: false,
@@ -83,7 +83,7 @@ class SavingManager{
                 let block = blocks[i];
 
                 //already deleted
-                if (block.block === undefined || block.block.blockchain === undefined){
+                if (block.block || block.block.blockchain ){
                     blocks.splice(i,1);
                     i--;
                     continue;
@@ -144,7 +144,7 @@ class SavingManager{
 
         let answer = 1;
 
-        while (answer !== null){
+        while (answer ){
 
             clearTimeout( this._timeoutSaveManager );
 

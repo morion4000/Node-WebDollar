@@ -11,23 +11,37 @@ class PoolWorkValidation{
         this.poolManagement = poolManagement;
         this.poolWorkManagement = poolWorkManagement;
 
-        this._works = [];
+        this._works = {};
+        this._worksLength = 0;
+
+        this._worksDuplicate =  {};
+
     }
 
     startPoolWorkValidation(){
 
         if ( !this._timeoutPoolWorkValidation )
-            this._timeoutPoolWorkValidation = setTimeout( this.processPoolWorkValidation.bind(this), 100 );
+            this._timeoutPoolWorkValidation = setTimeout( this._processPoolWorkValidation.bind(this), 100 );
 
+        if ( !this._intervalPoolWorkDuplicateRemoval )
+            this._intervalPoolWorkDuplicateRemoval = setInterval( this._removePoolWorkDuplicates.bind(this), 60*1000 );
     }
 
     stopPoolWorkValidation(){
         clearTimeout(this._timeoutPoolWorkValidation);
+        clearInterval(this._intervalPoolWorkDuplicateRemoval);
     }
 
     async pushWorkForValidation(minerInstance, work, forced ){
 
         try{
+
+            if (!work.hash)
+                return;
+
+            work.hashHex = work.hash.toString("hex");
+            if ( this._worksDuplicate[work.hashHex] )
+                return;
 
             if (typeof work.timeDiff === "number") {
 
@@ -46,39 +60,55 @@ class PoolWorkValidation{
                 minerInstance: minerInstance
             };
 
-            if (BlockchainGenesis.isPoSActivated(work.h))
-                forced = true;
 
-            if (work.result || forced  ){
+            if (BlockchainGenesis.isPoSActivated(work.h)) {
+
+                //avoid validating not signed POS
+                if ( !work.pos || !work.pos.posSignature )
+                    return;
+
+                forced = true;
+            }
+
+            this._worksDuplicate [ work.hashHex ] = new Date().getTime();
+
+            if ( work.result || forced  ){
 
                 await this._validateWork(workData);
 
             } else {
 
-                if (!BlockchainGenesis.isPoSActivated(work.h) && work.hash.equals( consts.BLOCKCHAIN.BLOCKS_MAX_TARGET_BUFFER ))
-                    return;
+                this.addWork(workData);
 
-                this._works.push(workData);
             }
 
         }catch (exception){
-
+            console.log(exception);
         }
 
 
     }
 
-    async processPoolWorkValidation(){
+    addWork(workData){
 
-        Log.info("Total amount of work to validate: "+this._works.length, Log.LOG_TYPE.POOLS );
+        if (!this._works[workData.hashHex]){
+            this._works[workData.hashHex] = workData;
+            this._worksLength++;
+        }
+
+    }
+
+    async _processPoolWorkValidation(){
+
+        Log.info("Total amount of work to validate: "+this._worksLength, Log.LOG_TYPE.POOLS );
 
         if (this.poolManagement.blockchain.semaphoreProcessing._list.length === 0 ) {
 
             let index = -1;
 
-            let n = Math.min(PROCESS_COUNT, this._works.length);
+            let n = Math.min(PROCESS_COUNT, this._worksLength);
 
-            for (let i = 0; i < n; i++) {
+            for (let key in this._works){
 
                 try {
                     await this._validateWork(this._works[i]);
@@ -86,16 +116,19 @@ class PoolWorkValidation{
 
                 }
 
-                index = i;
+                this._works[key] = undefined;
+                delete this._works[key];
+
+                index++;
+                if (index > n)
+                    break;
             }
 
-
-            if (index >= 0)
-                this._works.splice(0, index);
+            this._worksLength -= n;
 
         }
 
-        this._timeoutPoolWorkValidation = setTimeout( this.processPoolWorkValidation.bind(this), Math.max( 100, Math.min(10000, 50000/this._works.length)) );
+        this._timeoutPoolWorkValidation = setTimeout( this._processPoolWorkValidation.bind(this), Math.max( 100, Math.min(10000, this._worksLength ? 50000/this._worksLength : 10000)) );
 
     }
 
@@ -107,6 +140,23 @@ class PoolWorkValidation{
             await this.poolWorkManagement.processWork( work.minerInstance, work.work, prevBlock );
         else
             Log.error("_validateWork didn't work as the block " + work.work.id + " was not found", Log.LOG_TYPE.POOLS, work.work );
+
+    }
+
+    _removePoolWorkDuplicates(){
+
+        try{
+
+            let time = new Date().getTime();
+
+            for (let key in this._worksDuplicate)
+                if ( time - this._worksDuplicate[key] > 180000 ){
+                    delete this._worksDuplicate[key];
+                }
+
+        } catch (exception){
+
+        }
 
     }
 
