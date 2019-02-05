@@ -59,7 +59,7 @@ class PoolDataBlockInformation {
 
         this.blockInformationMinersInstances = [];
 
-        if (this.block !== undefined)
+        if (this.block )
             this.block.destroyBlock();
 
         this.block = undefined;
@@ -146,9 +146,14 @@ class PoolDataBlockInformation {
         let minerInstances = [];
 
         if (this.blockInformationMinersInstances && Array.isArray(this.blockInformationMinersInstances) )
-            for (let i=0; i<this.blockInformationMinersInstances.length; i++)
-                if (this.blockInformationMinersInstances[i].minerInstance && this.blockInformationMinersInstances[i].reward > 0 )
-                    minerInstances.push( this.blockInformationMinersInstances[i].serializeBlockInformationMinerInstance() );
+            for (let i=0; i<this.blockInformationMinersInstances.length; i++) {
+                try {
+                    if (this.blockInformationMinersInstances[i].minerInstance && this.blockInformationMinersInstances[i].reward > 0)
+                        minerInstances.push(this.blockInformationMinersInstances[i].serializeBlockInformationMinerInstance());
+                } catch (exception){
+
+                }
+            }
 
 
         buffers.push ( Serialization.serializeNumber4Bytes(minerInstances.length) );
@@ -210,12 +215,13 @@ class PoolDataBlockInformation {
         for (let i=0; i<length; i++){
 
             let blockInformationMinerInstance = new PoolDataBlockInformationMinerInstance(this.poolManagement, this, undefined);
+            this.blockInformationMinersInstances.push(blockInformationMinerInstance);
+
             offset = blockInformationMinerInstance.deserializeBlockInformationMinerInstance(buffer, offset, version);
 
-            if ( !blockInformationMinerInstance.minerInstance ) continue;
+            if ( !blockInformationMinerInstance.minerInstance ||  (blockInformationMinerInstance.minerInstanceTotalDifficultyPOS.isEqualTo(0) && blockInformationMinerInstance.minerInstanceTotalDifficultyPOW.isEqualTo(0) ) )
+                this.blockInformationMinersInstances.slice( this.blockInformationMinersInstances.length-1 );
 
-            if (blockInformationMinerInstance.minerInstanceTotalDifficultyPOS.isGreaterThan(0) || blockInformationMinerInstance.minerInstanceTotalDifficultyPOW.isGreaterThan(0))
-                this.blockInformationMinersInstances.push(blockInformationMinerInstance);
 
         }
         this._calculateTimeRemaining();
@@ -274,11 +280,11 @@ class PoolDataBlockInformation {
         if (!minerInstance ) throw {message: "minerInstance is undefined"};
 
         let blockInformationMinerInstance = this._findBlockInformationMinerInstance(minerInstance);
-        if (blockInformationMinerInstance ) return blockInformationMinerInstance;
 
-
-        blockInformationMinerInstance = new PoolDataBlockInformationMinerInstance(this.poolManagement, this, minerInstance, undefined, );
-        this.blockInformationMinersInstances.push(blockInformationMinerInstance);
+        if ( !blockInformationMinerInstance ) {
+            blockInformationMinerInstance = new PoolDataBlockInformationMinerInstance(this.poolManagement, this, minerInstance, undefined,);
+            this.blockInformationMinersInstances.push(blockInformationMinerInstance);
+        }
 
         return blockInformationMinerInstance;
 
@@ -349,7 +355,8 @@ class PoolDataBlockInformation {
 
     findFirstMinerInstance(minerAddress){
 
-        if ( !Buffer.isBuffer(minerAddress) ) minerAddress = minerAddress.address;
+        if ( typeof minerAddress === "string" ) minerAddress = Buffer.from(minerAddress, "hex");
+        if ( !Buffer.isBuffer(minerAddress) && typeof minerAddress === "object" ) minerAddress = minerAddress.address;
 
         let minerAddressString = minerAddress.toString("hex");
 

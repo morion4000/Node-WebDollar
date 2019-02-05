@@ -86,15 +86,15 @@ class PoolData {
     addMiner(minerAddress, minerReward = 0){
 
         let miner = this.findMiner(minerAddress);
-        if ( miner === null) {
+        if ( !miner ) {
 
             if ( !Buffer.isBuffer(minerAddress) || minerAddress.length !== consts.ADDRESSES.ADDRESS.LENGTH )
                 throw {message: "miner address is invalid" };
 
 
-            this.miners.push( new PoolDataMiner( this, uuid.v4(), minerAddress, minerReward, [] ) );
+            miner = new PoolDataMiner( this, uuid.v4(), minerAddress, minerReward, [] );
+            this.miners.push( miner );
 
-            miner = this.miners[this.miners.length-1]
 
         }
 
@@ -181,10 +181,11 @@ class PoolData {
             this.miners = [];
             for (let i = 0; i < numMiners; ++i) {
 
-                let miner = new PoolDataMiner(this, i );
+                let miner = new PoolDataMiner( this, i );
                 offset = miner.deserializeMiner(buffer, offset );
 
-                this.miners.push(miner);
+                if (!this.findMiner(miner.address))
+                    this.miners.push(miner);
 
             }
 
@@ -231,6 +232,7 @@ class PoolData {
                 offset = await blockInformation.deserializeBlockInformation(buffer, offset );
 
                 if (blockInformation.blockInformationMinersInstances.length > 0) {
+
                     this.blocksInfo.push(blockInformation);
 
                     for (let j = 0; j < blockInformation.blockInformationMinersInstances.length; j++)

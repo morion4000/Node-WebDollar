@@ -266,7 +266,7 @@ consts.SETTINGS = {
 
     NODE: {
 
-        VERSION: "1.203.0",
+        VERSION: "1.203.1",
 
         VERSION_COMPATIBILITY: "1.200.1",
         VERSION_COMPATIBILITY_POOL_MINERS: "1.200.1",
@@ -502,7 +502,7 @@ consts.NETWORK_TYPE = {
 
 if ( consts.DEBUG === true ) {
 
-    consts.MINING_POOL.SKIP_POW_REWARDS = false;
+    consts.MINING_POOL.SKIP_POW_REWARDS = true;
     consts.MINING_POOL.SKIP_POS_REWARDS = false;
 
     consts.SETTINGS.NODE.VERSION = "3"+consts.SETTINGS.NODE.VERSION;

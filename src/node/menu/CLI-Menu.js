@@ -159,8 +159,8 @@ class CLI {
                 data.transaction = answer.transaction.serializeTransaction();
                 data.signature = answer.signature;
 
-                if(wantToPropagate)
-                    Blockchain.blockchain.transactions.transactionsProtocol.propagateNewPendingTransaction( answer.transaction );
+                if (wantToPropagate)
+                    Blockchain.blockchain.transactions.pendingQueue.includePendingTransaction( answer.transaction, undefined, true);
 
             }else{
 
@@ -181,12 +181,10 @@ class CLI {
                 console.log("Transaction successfully exported to ," + addressPath+"transaction.tx");
 
                 resolve(true);
-                return;
 
             });
 
             resolve(true);
-            return;
 
         });
 

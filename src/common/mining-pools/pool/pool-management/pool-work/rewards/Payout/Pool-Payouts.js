@@ -84,7 +84,7 @@ class PoolPayouts{
 
         let blocksConfirmed = [];
         for (let i=0; i<this.poolData.blocksInfo.length-1; i++)
-            if (this.poolData.blocksInfo[i].confirmed && !this.poolData.blocksInfo[i].payout )
+            if (this.poolData.blocksInfo[i].confirmed && !this.poolData.blocksInfo[i].payout &&  !this.poolData.blocksInfo[i].payoutTransaction )
                 if(this.poolData.blocksInfo[i].block)
                     if ( (BlockchainGenesis.isPoSActivated( this.poolData.blocksInfo[i].block.height ) && paymentType === "pos") ||  ( !BlockchainGenesis.isPoSActivated( this.poolData.blocksInfo[i].block.height ) && paymentType === "pow" ) )
                         blocksConfirmed.push(this.poolData.blocksInfo[i]);
@@ -186,7 +186,7 @@ class PoolPayouts{
 
                     blockInformationMinerInstance.miner.__tempRewardConfirmedOther += blockInformationMinerInstance.reward;
 
-                    if (blockInformationMinerInstance.miner.referrals.referralLinkMiner !== undefined)
+                    if (blockInformationMinerInstance.miner.referrals.referralLinkMiner )
                         blockInformationMinerInstance.miner.referrals.referralLinkMiner.miner.__tempRewardConfirmedOther += blockInformationMinerInstance.rewardForReferral;
 
                 });
@@ -233,6 +233,8 @@ class PoolPayouts{
             Log.info("Payout Total To Pay: " + (totalToPay / WebDollarCoins.WEBD), Log.LOG_TYPE.POOLS);
 
             let index = 0;
+            let transactions = [];
+
             while (index * 255 < this._toAddresses.length) {
 
                 let toAddresses = this._toAddresses.slice(index*255, (index+1)*255);
@@ -250,8 +252,11 @@ class PoolPayouts{
                 */
 
                 try {
+
                     let transaction = await Blockchain.Transactions.wizard.createTransactionSimple( this.blockchain.mining.minerAddress, toAddresses, undefined, PAYOUT_FEE, );
                     if (!transaction.result) throw {message: "Transaction was not made"};
+
+                    transactions.push(transaction);
                 } catch (exception){
                     Log.error("Payout: ERROR CREATING TRANSACTION", Log.LOG_TYPE.POOLS);
                     throw exception;
@@ -273,7 +278,7 @@ class PoolPayouts{
 
                         //not paid
                         //move funds to confirmedOther
-                        if (paid === null)
+                        if (paid )
                             miner.rewardConfirmedOther += miner.__tempRewardConfirmedOther;
 
                         miner.__tempRewardConfirmedOther = 0;
@@ -282,7 +287,7 @@ class PoolPayouts{
                         blockInformationMinerInstance.reward = 0; //i already paid
 
 
-                        if ( miner.referrals.referralLinkMiner !== undefined ) {
+                        if ( miner.referrals.referralLinkMiner  ) {
 
                             miner.referrals.referralLinkMiner.rewardReferralSent += blockInformationMinerInstance.rewardForReferral;
                             miner.referrals.referralLinkMiner.rewardReferralConfirmed -= blockInformationMinerInstance.rewardForReferral;
@@ -296,7 +301,7 @@ class PoolPayouts{
 
                 });
 
-                blocksConfirmed[i].payout = true;
+                blocksConfirmed[i].payoutTransaction = true;
             }
 
 
@@ -304,7 +309,7 @@ class PoolPayouts{
             for (let i=0; i<this._toAddresses.length; i++){
 
                 let miner = this.poolData.findMiner( this._toAddresses[i].address );
-                if (miner === null) Log.error("ERROR! Miner was not found at the payout", Log.LOG_TYPE.POOLS);
+                if ( !miner ) Log.error("ERROR! Miner was not found at the payout", Log.LOG_TYPE.POOLS);
 
                 miner.rewardSent += this._toAddresses[i].amount; //i paid totally
                 miner.rewardConfirmed = 0; //paid this
@@ -316,7 +321,11 @@ class PoolPayouts{
 
             }
 
-            Log.info("Payout Total Paid "+ (total / WebDollarCoins.WEBD), Log.LOG_TYPE.POOLS)
+            Log.info("Payout Total Paid "+ (total / WebDollarCoins.WEBD), Log.LOG_TYPE.POOLS);
+
+            if (transactions.length > 0)
+                for (let i=0; i < blocksConfirmed.length; i++)
+                    blocksConfirmed[i].payoutTx = transactions[0].txId;
 
 
         } catch (exception){
@@ -347,7 +356,7 @@ class PoolPayouts{
 
         let found = this._findAddressTo(address);
 
-        if (found !== null)
+        if (found )
             return found;
 
         let object = {

@@ -10,7 +10,7 @@ import BlockchainGenesis from 'common/blockchain/global/Blockchain-Genesis'
 const LIGHT_SERVER_POOL_VALIDATION_BLOCK_CONFIRMATIONS = 50; //blocks
 const VALIDATION_BLOCK_CONFIRMATIONS_FAILS_START = 40; //blocks
 
-const MAXIMUM_FAIL_CONFIRMATIONS = 20; //blocks
+const MAXIMUM_FAIL_CONFIRMATIONS = 80; //blocks
 
 const CONFIRMATIONS_REQUIRE_OTHER_MINERS = consts.DEBUG ? false : true;
 
@@ -71,7 +71,7 @@ class PoolRewardsManagement{
         //     this.poolData.blocksInfo.forEach( (blockInfo)=>{
         //
         //         let block = this.blockchain.blocks[blockInfo.height];
-        //         if ( blockInfo && blockInfo.height >= this.blockchain.blocks.blocksStartingPoint && block && this.blockchain.blocks.length - blockInfo.height >= 10 )
+        //         if ( blockInfo && blockInfo.height >= this.blockchain.blocks.blocksStartingPoint && block && this.blockchain.blocks.length - blockInfo.height >= 50 )
         //             if (BlockchainGenesis.isPoSActivated(blockInfo.height))
         //
         //                 blockInfo.blockInformationMinersInstances.forEach((blockInformationMinerInstance) => {
@@ -136,8 +136,8 @@ class PoolRewardsManagement{
 
                 let firstBlock;
                 for (let i = 0; i < this.poolData.blocksInfo.length; i++)
-                    if (this.poolData.blocksInfo[i].block !== undefined)
-                        if (firstBlock === undefined || this.poolData.blocksInfo[i].block.height < firstBlock)
+                    if (this.poolData.blocksInfo[i].block )
+                        if ( !firstBlock  || this.poolData.blocksInfo[i].block.height < firstBlock)
                             firstBlock = this.poolData.blocksInfo[i].block.height;
 
                 for (let i = this.blockchain.blocks.length - 1, n = Math.max(this.blockchain.blocks.blocksStartingPoint, firstBlock); i >= n; i--) {
@@ -148,7 +148,7 @@ class PoolRewardsManagement{
                         confirmationsPool++;
                     else {
 
-                        if (uniques[ block.data.minerAddress.toString("hex")] === undefined) {
+                        if ( !uniques[ block.data.minerAddress.toString("hex")] ) {
                             uniques[ block.data.minerAddress.toString("hex")] = true;
                             confirmationsOthersUnique++;
                         } else
@@ -171,34 +171,54 @@ class PoolRewardsManagement{
 
         let poolBlocksBeingConfirmed = 0;
 
+        let needSave = false;
+
         //recalculate the confirmations
         for (let i = this.poolData.blocksInfo.length-1; i >= 0; i--  ){
+
+            //already confirmed
+            if ( this.poolData.blocksInfo[i].payoutTransaction  ) {
+
+                let found = false;
+
+                //verify if the transaction was included
+                //at least 2 confirmations
+                if (!this.poolData.blocksInfo[i].payoutTx) found = true;
+                else
+                for (let i=this.blockchain.blocks.length-1 - 2; i >= Math.max( this.blockchain.blocks.length - 100, this.blockchain.blocks.blocksStartingPoint); i-- )
+                    if (this.blockchain.blocks[i].data.transactions.findTransactionInBlockData( this.poolData.blocksInfo[i].payoutTx ) >= 0 ){
+                        found = true;
+                        break;
+                    }
+
+                //let's delete old payouts
+                if (found){
+                    this.poolData.blocksInfo[i].payout = true;
+                    Log.warn("BLOCK TRANSACTION PAYOUT CONFIRMED "+i, Log.LOG_TYPE.POOLS);
+                }
+
+            }
 
             //already confirmed
             if ( this.poolData.blocksInfo[i].payout){
 
                 //let's delete old payouts
-                if ( !this.poolData.blocksInfo[i].block || (this.blockchain.blocks.length - this.poolData.blocksInfo[i].block.height > 40)) {
-
-                    this.poolManagement.poolStatistics.poolBlocksConfirmedAndPaid++;
-                    this.poolManagement.poolStatistics.poolBlocksConfirmed--;
-
-                    Log.warn("BLOCK ALREADY PAID "+i, Log.LOG_TYPE.POOLS);
-
-                    this.poolData.deleteBlockInformation(i);
-                }
+                this.poolManagement.poolStatistics.poolBlocksConfirmedAndPaid++;
+                this.poolManagement.poolStatistics.poolBlocksConfirmed--;
+                Log.warn("BLOCK ALREADY PAID "+i, Log.LOG_TYPE.POOLS);
+                this.poolData.deleteBlockInformation(i);
+                needSave = true;
 
                 continue;
             }
 
             //already confirmed
-            if (this.poolData.blocksInfo[i].confirmed){
+            if (this.poolData.blocksInfo[i].confirmed)
                 continue;
-            }
 
             let blockInfo = this.poolData.blocksInfo[i].block;
 
-            if (blockInfo === undefined){
+            if ( !blockInfo ){
 
                 if (i === this.poolData.blocksInfo.length-1 ) continue;
                 else { //for some reasons, maybe save/load
@@ -223,7 +243,7 @@ class PoolRewardsManagement{
             //confirm using my own blockchain / light blockchain
             if (this.blockchain.blocks.blocksStartingPoint < blockInfo.height){ //i can confirm the block by myself
 
-                if (this.blockchain.blocks[blockInfo.height] === undefined) continue;
+                if ( !this.blockchain.blocks[blockInfo.height] ) continue;
 
                 if ( BufferExtended.safeCompare( blockInfo.hash, this.blockchain.blocks[blockInfo.height].hash  ) ){
 
@@ -305,6 +325,10 @@ class PoolRewardsManagement{
         }
 
         this.poolManagement.poolStatistics.poolBlocksBeingConfirmed = poolBlocksBeingConfirmed;
+
+        if (needSave)
+            await this.poolManagement.poolData.saveBlocksInformation();
+
 
 
     }
