@@ -68,7 +68,7 @@ class NodeAPIRouter{
         }
 
         // Return address info: balance, blocks mined and transactions
-        this._addRoute( 'address/:address', NodeAPIPublicAddresses.addressInfo, nodeApiType, 3 , app, prefix, middleWare );
+        // this._addRoute( 'address/:address', NodeAPIPublicAddresses.addressInfo, nodeApiType, 3 , app, prefix, middleWare );
 
         // Return address info: balance, blocks mined and transactions
         this._addRoute( 'server/nodes/list', NodeAPIPublicNodes.nodesList.bind(NodeAPIPublicNodes), nodeApiType, 20 , app, prefix, middleWare );
@@ -85,6 +85,8 @@ class NodeAPIRouter{
         this._addRoute( 'pools/pool-data', NodeAPIPublicPools.poolData, nodeApiType, 5, app, prefix, middleWare );
 
         this._addRoute( 'transactions/pending', NodeAPIPublicTransactions.pending, nodeApiType, 200 , app, prefix, middleWare );
+
+        this._addRoute( 'transactions/exists/:tx_id', NodeAPIPublicTransactions.checkTransactionExists, nodeApiType, 200 , app, prefix, middleWare );
 
         // respond with "hello"
         this._addRoute( 'hello', NodeAPIPublic.helloWorld, nodeApiType, 1000, app, prefix, middleWare );

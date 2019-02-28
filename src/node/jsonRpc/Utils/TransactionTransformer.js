@@ -3,8 +3,7 @@ import WebDollarCoins                   from './../../../common/utils/coins/WebD
 import BufferExtended                   from './../../../common/utils/BufferExtended';
 import InterfaceBlockchainAddressHelper from './../../../common/blockchain/interface-blockchain/addresses/Interface-Blockchain-Address-Helper';
 
-class TransactionTransformer
-{
+class TransactionTransformer {
     /**
      * @param {InterfaceBlockchainTransaction} oTransaction
      * @param {InterfaceBlockchainBlock|null}  oBlock
@@ -25,10 +24,10 @@ class TransactionTransformer
             to_length       : oTransaction.to.addresses.length,
             fee             : oTransaction.fee / WebDollarCoins.WEBD,
             fee_raw         : oTransaction.fee,
-            amount          : nInputSum / WebDollarCoins.WEBD,
-            amount_raw      : nInputSum,
-            total_amount    : nInputSum / WebDollarCoins.WEBD + oTransaction.fee / WebDollarCoins.WEBD,
-            total_amount_raw: nInputSum + oTransaction.fee,
+            amount          : nOutputSum / WebDollarCoins.WEBD,
+            amount_raw      : nOutputSum,
+            total_amount    : nInputSum / WebDollarCoins.WEBD,
+            total_amount_raw: nInputSum,
             timestamp       : null,
             timestamp_UTC   : null,
             timestamp_block : null,
@@ -38,6 +37,7 @@ class TransactionTransformer
             from            : {trxs: [], addresses: [], amount: nInputSum  / WebDollarCoins.WEBD, amount_raw: nInputSum},
             to              : {trxs: [], addresses: [], amount: nOutputSum / WebDollarCoins.WEBD, amount_raw: nOutputSum},
             isConfirmed     : false,
+            isVirtual       : false,
         };
 
         if (oBlock !== null) {

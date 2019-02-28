@@ -5,8 +5,7 @@ import CONNECTION_TYPE from "node/lists/types/Connection-Type";
 import NodesWaitlist from 'node/lists/waitlist/Nodes-Waitlist'
 import NODE_TYPE from "node/lists/types/Node-Type"
 import consts from 'consts/const_global'
-
-const EventEmitter = require('events');
+import AdvancedEmitter from "common/utils/Advanced-Emitter";
 
 /*
     The List is populated with Node Sockets only if the socket pass the Hello Message
@@ -21,8 +20,7 @@ class NodesList {
 
         console.log("NodesList constructor");
 
-        this.emitter = new EventEmitter();
-        this.emitter.setMaxListeners(2000);
+        this.emitter = new AdvancedEmitter(2000);
 
         this.nodes = [];
         this.consensusBlock = 0;
@@ -37,7 +35,7 @@ class NodesList {
             2:0,
         };
 
-        setInterval( this.recalculateSocketsLatency.bind(this), consts.SETTINGS.PARAMS.LATENCY_CHECK );
+        setTimeout( this.recalculateSocketsLatency.bind(this), consts.SETTINGS.PARAMS.LATENCY_CHECK );
 
         this.removeDisconnectedSockets();
     }
@@ -155,7 +153,8 @@ class NodesList {
     async disconnectSocket(socket, connectionType = 'all'){
 
         if (socket && !socket.node) {
-            socket.disconnect();
+            if (socket.connected)
+                socket.disconnect();
             return false;
         }
 
@@ -288,11 +287,18 @@ class NodesList {
 
     }
 
-    recalculateSocketsLatency(){
+    async recalculateSocketsLatency(){
 
-        for (let i=0; i<this.nodes.length; i++)
-            this.nodes[i].socket.node.protocol.calculateLatency();
+        try{
 
+            for (let i=0; i<this.nodes.length; i++)
+                await this.nodes[i].socket.node.protocol.calculateLatency();
+
+        }catch(exception){
+
+        }
+
+        setTimeout( this.recalculateSocketsLatency.bind(this), consts.SETTINGS.PARAMS.LATENCY_CHECK );
     }
 
 }
