@@ -70,7 +70,7 @@ class NodeProtocol {
         if (validationDoubleConnectionsTypes.uuid && connections.countUUIDs !== 0 ) return false;
         if (validationDoubleConnectionsTypes.ip && connections.countIPs > ( Blockchain.isPoolActivated ? consts.MINING_POOL.CONNECTIONS.NO_OF_IDENTICAL_IPS : consts.SETTINGS.PARAMS.CONNECTIONS.NO_OF_IDENTICAL_IPS   ))  return false;
 
-        console.log("RECEIVED HELLO NODE BACK", response.version);
+        console.debug("RECEIVED HELLO NODE BACK", response.version);
 
         this.node.protocol.nodeType = response.nodeType;
         this.node.protocol.nodeConsensusType = response.nodeConsensusType || NODES_CONSENSUS_TYPE.NODE_CONSENSUS_PEER;
